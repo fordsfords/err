@@ -30,7 +30,7 @@ ERR_F funct_b(int argc, char **argv)
 
 
   if (*argv[1] == '0') {
-    return NULL;
+    return ERR_OK;
   }
   else if (*argv[1] == '1') {
     char *big_mesg = (char *)malloc(65536*1024+1);
@@ -57,20 +57,20 @@ ERR_F funct_b(int argc, char **argv)
   funct_c(argc, argv);  /* compiler warning. */
 #endif
 
-  return NULL;
+  return ERR_OK;
 }
 
 
 ERR_F funct_a(int argc, char **argv)
 {
-  err_t *err = NULL;
+  err_t *err = ERR_OK;
 
   if (argc == 1) ERR_THROW(1, "argc is 1");
 
   err = funct_b(argc, argv);
   if (err) ERR_RETHROW(err, 2, "funct_a: rethrow from funct_b");
 
-  return NULL;
+  return ERR_OK;
 }  /* funct_a */
 
 int main(int argc, char **argv)

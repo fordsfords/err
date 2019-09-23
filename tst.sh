@@ -16,7 +16,7 @@ gcc $* -Werror -Wall -g -o err_test err.c err_test.c
 echo "./err_test x x"
 ./err_test x x 2>tmp.1
 perl <tmp.1 -e \
-' $_=<>; /^ERR_ASSRT failed at err_test.*\(err == NULL\)$/       || die"ERR:$_";
+' $_=<>; /^ERR_ASSRT failed at err_test.*\(err == ERR_OK\)$/     || die"ERR:$_";
   $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
   $_=<>; /^Line: /                                               || die"ERR:$_";
   $_=<>; /^Code: 2$/                                             || die"ERR:$_";
@@ -57,7 +57,7 @@ echo "./err_test 3"
 ./err_test 3 2>tmp.3
 perl <tmp.3 -e \
 ' $_=<>; /^funct_c$/                                             || die"ERR:$_";
-  $_=<>; /^ERR_ASSRT failed at err_test.c:.* \(err == NULL\)$/   || die"ERR:$_";
+  $_=<>; /^ERR_ASSRT failed at err_test.c:.* \(err == ERR_OK\)$/ || die"ERR:$_";
   $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
   $_=<>; /^Line: /                                               || die"ERR:$_";
   $_=<>; /^Code: 2$/                                             || die"ERR:$_";

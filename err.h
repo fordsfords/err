@@ -30,6 +30,8 @@ extern "C" {
 #  define ERR_API
 #endif
 
+#define ERR_OK NULL
+
 /* Simple macro to skip past the dir name of a full path (if any). */
 #if defined(_WIN32)
 #  define ERR_BASENAME(_p)\
@@ -42,10 +44,11 @@ extern "C" {
 /* Applications that return an err_t should be declared with this macro. */
 #define ERR_F __attribute__ ((__warn_unused_result__)) err_t *
 
-/* Assertion macro (prints programmer-friendly dump to _stream). */
+/* Assertion with abort macro (prints programmer-friendly dump to _stream). */
 #define ERR_ASSRT(_cond_expr, _err, _stream) do { if (!(_cond_expr)) { fprintf(_stream, "ERR_ASSRT failed at %s:%d (%s)\n", ERR_BASENAME(__FILE__), __LINE__, #_cond_expr); err_print(_err, _stream); fflush(_stream); abort(); } } while (0)
 
-#define ERR_A(_err) ERR_ASSRT(_err == NULL, _err, stderr)
+/* Shortcut assertion with abort macro: asserts no error. */
+#define ERR_A(_err) ERR_ASSRT(_err == ERR_OK, _err, stderr)
 
 #define ERR_THROW(_code, _mesg) do { return err_throw(__FILE__, __LINE__, _code, _mesg); } while (0)
 
