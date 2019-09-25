@@ -52,9 +52,7 @@ extern "C" {
 
 #define ERR_THROW(_code, _mesg) do { return err_throw(__FILE__, __LINE__, _code, _mesg); } while (0)
 
-#define ERR_R(_err) do { if (_err) ERR_RETHROW(_err, _err->code, NULL); } while (0)
-
-#define ERR_RETHROW(_err, _code, _mesg) do { return err_rethrow(__FILE__, __LINE__, _err, _code, _mesg); } while (0)
+#define ERR(_funct_call) do { err_t *_err; _err = (_funct_call); if (_err) return err_rethrow(__FILE__, __LINE__, _err, _err->code, NULL); } while (0)
 
 
 struct err_s;  /* Forward def to allow self-reference. */

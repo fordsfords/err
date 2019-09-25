@@ -47,7 +47,7 @@ ERR_F funct_b(int argc, char **argv)
     err_dispose(err);
   }
   else {
-    err = funct_c(argc, argv); ERR_R(err);
+    ERR(funct_c(argc, argv));
   }
 
   /* ERR_F uses __attribute__ ((__warn_unused_result__)) which generates a
@@ -68,7 +68,7 @@ ERR_F funct_a(int argc, char **argv)
   if (argc == 1) ERR_THROW(1, "argc is 1");
 
   err = funct_b(argc, argv);
-  if (err) ERR_RETHROW(err, 2, "funct_a: rethrow from funct_b");
+  if (err) return err_rethrow(__FILE__, __LINE__, err, 2, "funct_a: rethrow from funct_b");
 
   return ERR_OK;
 }  /* funct_a */
