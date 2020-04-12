@@ -37,5 +37,5 @@ and backtracing can be resumed.
 
 Note that "err" does not address the higher-level question of how an
 application should react to errors,
-nor does it address how users are informed of errors.
+nor does it address how end users are informed of errors.
 "Err" is a low-level coding method for C APIs.
