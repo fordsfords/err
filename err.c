@@ -1,4 +1,5 @@
 /* err.c - Error handling infrastructure.
+ * See https://github.com/fordsfords/err for documentation.
  *
  * This code and its documentation is Copyright 2019, 2019 Steven Ford,
  * http://geeky-boy.com and licensed "public domain" style under Creative
@@ -38,7 +39,7 @@ err_t *err_throw(char *file, int line, int code, char *mesg)
   err->file = file;
   err->line = line;
   err->code = code;
-  err->backtrace = NULL;
+  err->stacktrace = NULL;
 
   return err;
 }  /* err_throw */
@@ -66,7 +67,7 @@ err_t *err_rethrow(char *file, int line, err_t *in_err, int code, char *mesg)
   new_err->file = file;
   new_err->line = line;
   new_err->code = code;
-  new_err->backtrace = in_err;
+  new_err->stacktrace = in_err;
 
   return new_err;
 }  /* err_rethrow */
@@ -78,12 +79,12 @@ void err_print(err_t *err, FILE *stream)
     fprintf(stream, "File: %s\nLine: %d\nCode: %d\nMesg: %s\n",
       err->file, err->line, err->code,
       (err->mesg == NULL) ? ("(no mesg)") : (err->mesg));
-    if (err->backtrace != NULL) {
+    if (err->stacktrace != NULL) {
       fprintf(stream, "----------------\n");
     }
     fflush(stream);
 
-    err = err->backtrace;
+    err = err->stacktrace;
   }
 }  /* err_print */
 
@@ -91,7 +92,7 @@ void err_print(err_t *err, FILE *stream)
 void err_dispose(err_t *err)
 {
   while (err != NULL) {
-    err_t *next_err = err->backtrace;
+    err_t *next_err = err->stacktrace;
     if (err->mesg != NULL) {
       free(err->mesg);
       err->mesg = NULL;

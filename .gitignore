@@ -1,6 +1,9 @@
 # Test temporary files
 tmp.*
+*.log
 err_test
+example1
+example2
 
 # Prerequisites
 *.d

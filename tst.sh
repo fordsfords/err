@@ -6,6 +6,7 @@ gcc $* -DTST_ERR_F -Werror -Wall -g -o err_test err.c err_test.c 2>tmp.gcc
 ST=$?
 if [ $ST -eq 0 ]; then :
   echo "ERROR, should not have compiled clean!" >&2
+  exit 1
 else :
   echo "OK"
 fi
@@ -13,10 +14,17 @@ echo ""
 
 gcc $* -Werror -Wall -g -o err_test err.c err_test.c
 
-echo "./err_test x x"
+echo "./err_test x x (ignore any abort / core dump message)"
 ./err_test x x 2>tmp.1
 perl <tmp.1 -e \
-' $_=<>; /^ERR_ASSRT failed at err_test.*\(err == ERR_OK\)$/     || die"ERR:$_";
+' $_=<>; /^ERR_ABRT Failed!$/                                    || die"ERR:$_";
+  $_=<>; /^Stack trace:$/                                        || die"ERR:$_";
+  $_=<>; /^----------------$/                                    || die"ERR:$_";
+  $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
+  $_=<>; /^Line: /                                               || die"ERR:$_";
+  $_=<>; /^Code: 2$/                                             || die"ERR:$_";
+  $_=<>; /^Mesg: funct_a\(argc, argv\)$/                         || die"ERR:$_";
+  $_=<>; /^----------------$/                                    || die"ERR:$_";
   $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
   $_=<>; /^Line: /                                               || die"ERR:$_";
   $_=<>; /^Code: 2$/                                             || die"ERR:$_";
@@ -29,6 +37,7 @@ perl <tmp.1 -e \
   $_=<>; ! defined($_) || die $_; # check EOF
   print "OK\n";
 '
+if [ $? -ne 0 ]; then exit 1; fi
 echo ""
 
 echo "./err_test 0"
@@ -38,6 +47,7 @@ perl <tmp.0 -e \
   $_=<>; ! defined($_) || die $_; # check EOF
   print "OK\n";
 '
+if [ $? -ne 0 ]; then exit 1; fi
 echo ""
 
 # Test 1 doesn't work as expected on MacOS. Null is never returned from strdup.
@@ -51,13 +61,21 @@ perl <tmp.2 -e \
   $_=<>; ! defined($_) || die $_; # check EOF
   print "OK\n";
 '
+if [ $? -ne 0 ]; then exit 1; fi
 echo ""
 
-echo "./err_test 3"
+echo "./err_test 3 (ignore any abort / core dump message)"
 ./err_test 3 2>tmp.3
 perl <tmp.3 -e \
 ' $_=<>; /^funct_c$/                                             || die"ERR:$_";
-  $_=<>; /^ERR_ASSRT failed at err_test.c:.* \(err == ERR_OK\)$/ || die"ERR:$_";
+  $_=<>; /^ERR_ABRT Failed!$/                                    || die"ERR:$_";
+  $_=<>; /^Stack trace:$/                                        || die"ERR:$_";
+  $_=<>; /^----------------$/                                    || die"ERR:$_";
+  $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
+  $_=<>; /^Line: /                                               || die"ERR:$_";
+  $_=<>; /^Code: 2$/                                             || die"ERR:$_";
+  $_=<>; /^Mesg: funct_a\(argc, argv\)$/                         || die"ERR:$_";
+  $_=<>; /^----------------$/                                    || die"ERR:$_";
   $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
   $_=<>; /^Line: /                                               || die"ERR:$_";
   $_=<>; /^Code: 2$/                                             || die"ERR:$_";
@@ -66,7 +84,7 @@ perl <tmp.3 -e \
   $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
   $_=<>; /^Line: /                                               || die"ERR:$_";
   $_=<>; /^Code: 51$/                                            || die"ERR:$_";
-  $_=<>; /^Mesg: \(no mesg\)$/                                   || die"ERR:$_";
+  $_=<>; /^Mesg: funct_c\(argc, argv\)$/                         || die"ERR:$_";
   $_=<>; /^----------------$/                                    || die"ERR:$_";
   $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
   $_=<>; /^Line: /                                               || die"ERR:$_";
@@ -75,4 +93,5 @@ perl <tmp.3 -e \
   $_=<>; ! defined($_) || die $_; # check EOF
   print "OK\n";
 '
+if [ $? -ne 0 ]; then exit 1; fi
 echo ""
