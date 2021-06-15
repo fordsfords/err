@@ -15,7 +15,7 @@ In my experience, that kind of error reporting methodology is a recipe
 for unreliable programs that are hard to debug and fix.
 Thousands of lines of code written that call APIs without checking the
 return status,
-or does check but only prints something unintelligable even to the
+or does check but only prints something unintelligible even to the
 code maintainers.
 
 # Goals
@@ -43,11 +43,11 @@ In contrast, "err" returns an error object
 which saves the original error information until it is explicitly deleted.
 No chance of accidentally overwriting the error code.
 * Stack trace.
-"Err" has a primitive stacktracing capability, that can even transition thread
+"Err" has a primitive stack tracing capability, that can even transition thread
 boundaries.
 I.e. thread A sends a request to thread B, which detects an error,
 the error object (with stack trace) can be transferred back to thread A,
-and stacktracing can be resumed.
+and stack tracing can be resumed.
 
 I wish I could say that "err" is perfect.
 One negative to it is that it is VERY disruptive to add it to an existing
@@ -91,6 +91,22 @@ to print a stack trace to standard error and invoke "abort()" to dump core.
 allow a caller to easily check for specific error cases.
 The definition of the error codes is the responsibility of the application.
 The "err" system does not establish a convention.
+
+## Preparation
+
+Download the "err" repository from https://github.com/fordsfords/err
+
+I predict that most users will end up customizing the source files to
+conform to their application's software ecosystem.
+I did not develop "err" with the intention that it would be used as-is;
+it is a starting point.
+
+That said, I will consider any and all pull requests if you want to
+share your improvements.
+
+For Linux systems, you should be able to run the shell script "bld.sh".
+This will build and run the self-test,
+and will also extract and build (but not run) this README.md's example programs.
 
 ## Example 1
 
@@ -313,3 +329,28 @@ Code: -1
 Mesg: Internal consistency check failed
 ```
 
+# Random Details
+
+There are a few miscellaneous details.
+
+1. If you think "err" has the feel of a Unix-centric package,
+you're right.
+Certainly the "bld.sh" and "tst.sh" shell scripts are Unix-only.
+I'm a Unix-centric programmer; so sue me.
+However, I did invest effort to make the package usable with Windows.
+I have at least one (as of this writing) Windows program that uses it.
+1. There are a few places where a call to one of "err"s functions or
+macros can trigger writes to standard error and/or calling abort() to
+trigger a core dump.
+This is normally if a dynamic memory call (malloc(), strdup()) returns
+NULL.
+In my experience,
+it makes no sense for a library to simply return an error if out of memory;
+I've never seen a program that can recover from that.
+1. I've had at least one inquiry whether a Java version could be made
+of "err".
+My opinion is: why bother?
+The "err" package is an attempt to provide some of the benefits of
+exceptions to a C program.
+If you're using Java, use exceptions.
+I'm not sure "err" has any advantages over Java exceptions.
