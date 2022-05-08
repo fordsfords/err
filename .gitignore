@@ -1,5 +1,12 @@
 # Test temporary files
+x
+x.*
+*.x
+*.tmp
 tmp.*
+*.tmp[0-9]
+~*
+.DS_Store
 *.log
 err_test
 example1
