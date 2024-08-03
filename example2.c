@@ -8,7 +8,7 @@
 ERR_F reciprocal(double *result_rtn, double input_value)
 {
   /* Sanity checks: assert that things are true that must be true. */
-  ERR_ASSRT(input_value != 0, E_DIV_ZERO);  /* Division by zero now allowed. */
+  ERR_ASSRT(input_value != 0, E_DIV_ZERO);  /* Division by zero not allowed. */
 
   if (input_value == 1) {  /* CODE BUG!!! */
     ERR_THROW(E_INTERNAL_ERROR, "Internal consistency check failed");

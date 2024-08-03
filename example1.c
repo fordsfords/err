@@ -4,7 +4,7 @@
 ERR_F reciprocal(double *result_rtn, double input_value)
 {
   /* Sanity checks: assert that things are true that must be true. */
-  ERR_ASSRT(input_value != 0, 0);  /* Division by zero now allowed. */
+  ERR_ASSRT(input_value != 0, 0);  /* Division by zero not allowed. */
 
   *result_rtn = 1.0 / input_value;
 
