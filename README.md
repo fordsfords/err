@@ -1,6 +1,26 @@
 # err
 Err: Light-weight framework for C API error reporting.
 
+
+## Table of contents
+
+<!-- mdtoc-start -->
+&bull; [err](#err)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Table of contents](#table-of-contents)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Introduction](#introduction)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Goals](#goals)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Shortcomings](#shortcomings)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Usage](#usage)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Preparation](#preparation)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Example 1](#example-1)  
+&bull; [include <stdio.h>](#include-stdioh)  
+&bull; [include "err.h"](#include-errh)  
+<!-- TOC created by '../mdtoc/mdtoc.pl README.md' (see https://github.com/fordsfords/mdtoc) -->
+<!-- mdtoc-end -->
+
+
+## Introduction
+
 The C language does not have a well-established methodology for
 APIs to report errors.
 Java has exceptions, but C does not.
@@ -16,7 +36,7 @@ for unreliable programs that are hard to debug and fix.
 Thousands of lines of code written that call APIs without checking the
 return status, or does check but only prints something barely helpful.
 
-## Goals
+### Goals
 
 The goals of "err" are to be:
 * Lightweight.
@@ -46,7 +66,7 @@ for some long-winded thoughts on error handling and code readability.
 My implementation has evolved since then, but is still based on the same
 principles.
 
-## Shortcomings
+### Shortcomings
 
 * "err" is disruptive to add it to an existing API.
 You have to change the calling signatures.
@@ -55,7 +75,7 @@ You have to change the calling signatures.
 and should probably be limited to a log file that the maintainers look
 at more than end users.
 
-# Usage
+## Usage
 
 Here are the principles:
 
@@ -68,7 +88,7 @@ If the caller passes in NULL for the err_t, they call "abort".
 Otherwise the error information is passed back in the err_t structure,
 and the function returns the error code.
 
-## Preparation
+### Preparation
 
 Download the "err" repository from https://github.com/fordsfords/err
 
