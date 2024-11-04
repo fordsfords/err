@@ -89,23 +89,48 @@ char *funct_b(char b, err_t *err) {
 }  /* funct_b */
 
 
+char *funct_a(err_t *err) {
+  err_t local_err;
+
+  ASSRT(funct_b('b', &local_err) == ERR_OK);
+  ASSRT(local_err.code == ERR_OK);
+
+  ASSRT(funct_b('x', &local_err) == ERR_CODE_PARAM);
+  if (local_err.code) {
+    char *msg = err_asprintf("funct_b failed: {%s}", local_err.msg);
+    if (local_err.msg) { free(local_err.msg); }
+    ERR_THROW_FREEMSG(msg, local_err.code, err);
+  }
+
+  ERR_RTN_OK(err);
+}  /* funct_a */
+
+
 void test1() {
   err_t local_err;
   char *err_code;
 
   E(funct_b('b', &local_err));
+  ASSRT(local_err.code == ERR_OK);
 
   E(funct_b('b', NULL));
 
   err_code = funct_b('x', &local_err);
   ASSRT(err_code != ERR_OK);
   ASSRT(local_err.code == ERR_CODE_PARAM);
+
+  ASSRT(funct_a(&local_err) == ERR_CODE_PARAM);
+  ASSRT(local_err.code == ERR_CODE_PARAM);
+  printf("test1: funct_a: %s\n", local_err.msg);
+  free(local_err.msg);
 }  /* test1 */
 
 
 void test2() {
+  /* Calls abort. */
   funct_b('x', NULL);
-}  /* test1 */
+}  /* test2 */
+
 
 int main(int argc, char **argv) {
   parse_cmdline(argc, argv);

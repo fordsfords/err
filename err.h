@@ -27,13 +27,13 @@ extern "C" {
       __FILE__, __LINE__, __func__, err_code, err_msg); \
   fflush(stderr); \
   abort(); \
-} while (0)
+} while (0)  /* ERR_ABRT */
 
 
 #define ERR_THROW(err_msg, err_code, err_ptr) do { \
   if (err_ptr) { \
     (err_ptr)->code = (err_code); \
-    (err_ptr)->msg = strdup(err_msg); \
+    (err_ptr)->msg = err_asprintf("[%s:%d %s()] %s", __FILE__, __LINE__, __func__); \
     (err_ptr)->file = __FILE__; \
     (err_ptr)->func = __func__; \
     (err_ptr)->line = __LINE__; \
@@ -42,7 +42,23 @@ extern "C" {
   } else { \
     ERR_ABRT(err_code, err_msg); \
   } \
-} while (0)
+} while (0)  /* ERR_THROW */
+
+
+#define ERR_THROW_FREEMSG(err_msg, err_code, err_ptr) do { \
+  if (err_ptr) { \
+    (err_ptr)->code = (err_code); \
+    (err_ptr)->msg = err_asprintf("[%s:%d %s()] %s", __FILE__, __LINE__, __func__, err_msg); \
+    free(err_msg); \
+    (err_ptr)->file = __FILE__; \
+    (err_ptr)->func = __func__; \
+    (err_ptr)->line = __LINE__; \
+    (err_ptr)->next = NULL; \
+    return (err_ptr)->code; \
+  } else { \
+    ERR_ABRT(err_code, err_msg); \
+  } \
+} while (0)  /* ERR_THROW_FREEMSG */
 
 
 #define ERR_ASSRT(err_cond, err_code, err_ptr) do { \
@@ -50,8 +66,7 @@ extern "C" {
   if (! err_assrt_result) { \
     char *err_msg = err_asprintf("Assertion failed: %s", #err_cond); \
     if (err_msg) { \
-      ERR_THROW(err_msg, err_code, err_ptr); \
-      free(err_msg); \
+      ERR_THROW_FREEMSG(err_msg, err_code, err_ptr); \
     } else { \
       ERR_THROW("???", err_code, err_ptr); \
     } \
@@ -69,7 +84,7 @@ struct err_s;  /* forward definition. */
 typedef struct err_s err_t;
 struct err_s {
   char *code;
-  const char *msg;
+  char *msg;
   const char *file;
   const char *func;
   int line;
