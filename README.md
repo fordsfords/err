@@ -13,8 +13,6 @@ Err: Light-weight framework for C API error reporting.
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Usage](#usage)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Preparation](#preparation)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Example 1](#example-1)  
-&bull; [include <stdio.h>](#include-stdioh)  
-&bull; [include "err.h"](#include-errh)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [License](#license)  
 <!-- TOC created by '../mdtoc/mdtoc.pl README.md' (see https://github.com/fordsfords/mdtoc) -->
 <!-- mdtoc-end -->
@@ -107,47 +105,13 @@ For Linux systems, there are two scripts:
 
 ## Example 1
 
-This example shows the simplest usage.
-
-```c
-#include <stdio.h>
-#include "err.h"
-
-int reciprocal(double *result_rtn, double input_value, err_t *err)
-{
-  /* Sanity checks: assert that things are true that must be true. */
-  ERR_ASSRT(input_value != 0, ERR_CODE_PARAM, err);  /* Division by zero not allowed. */
-
-  *result_rtn = 1.0 / input_value;
-
-  return ERR_OK;
-}  /* reciprocal */
-
-
-int main(int argc, char **argv)
-{
-  double result;
-  err_t my_err;
-
-  reciprocal(&result, 4, NULL);  /* abort if error. */
-  printf("1/4=%f\n", result);  fflush(stdout);
-
-  if (reciprocal(&result, 0, &my_err) != ERR_OK) {
-  	printf("reciprocal error at [%s:%d %s()]: code=%d, msg=%s\n",
-	    my_err.file, my_err.line, my_err.func, my_err.code, my_err.msg);
-    fflush(stdout);
-  }
-
-  return 0;
-}  /* main */
-```
+The example1.c program shows a simple usage.
 
 Here's the output:
 ````
 1/4=0.250000
 reciprocal error at [example1.c:8 reciprocal()]: code=-1, msg=Assertion failed: input_value != 0
 ````
-In this case, no core file is generated.
 
 
 ## License

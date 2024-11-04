@@ -1,4 +1,4 @@
-/* err_tst.c - self-test.
+/* err_test.c - self-test for err package.
  *
  * This code and its documentation is Copyright 2019, 2019 Steven Ford,
  * http://geeky-boy.com and licensed "public domain" style under Creative
@@ -26,8 +26,9 @@
 #endif
 
 #define E(e_test) do { \
-  if ((e_test) != ERR_OK) { \
-    fprintf(stderr, "ERROR [%s:%d]: '%s' returned -1\n", __FILE__, __LINE__, #e_test); \
+  char *e_code = (e_test); \
+  if ((e_code) != 0) { \
+    fprintf(stderr, "ERROR [%s:%d]: '%s' returned %s\n", __FILE__, __LINE__, #e_test, e_code); \
     exit(1); \
   } \
 } while (0)
@@ -81,35 +82,29 @@ void parse_cmdline(int argc, char **argv) {
 }  /* parse_cmdline */
 
 
-int funct_b(char b, err_t *err) {
-  if (err) { err->code = ERR_OK; }
+char *funct_b(char b, err_t *err) {
   ERR_ASSRT(b == 'b', ERR_CODE_PARAM, err);
 
-  return ERR_OK;
+  ERR_RTN_OK(err);
 }  /* funct_b */
 
 
-int test1() {
+void test1() {
   err_t local_err;
-  int status;
+  char *err_code;
 
   E(funct_b('b', &local_err));
-  ASSRT(local_err.code == ERR_OK);
 
   E(funct_b('b', NULL));
 
-  status = funct_b('x', &local_err);
-  ASSRT(status == ERR_CODE_PARAM);
+  err_code = funct_b('x', &local_err);
+  ASSRT(err_code != ERR_OK);
   ASSRT(local_err.code == ERR_CODE_PARAM);
-
-  return ERR_OK;
 }  /* test1 */
 
 
-int test2() {
+void test2() {
   funct_b('x', NULL);
-
-  return 0;
 }  /* test1 */
 
 int main(int argc, char **argv) {
