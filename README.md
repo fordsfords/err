@@ -134,7 +134,7 @@ and will also extract and build (but not run) this README.md's example programs.
 
 ## Example 1
 
-[example1.c][example1.c] shows the simplest usage.
+[example1.c](example1.c) shows the simplest usage.
 
 Notice the lines:
 ````c
