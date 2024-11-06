@@ -1,3 +1,5 @@
+/* example2.c */
+
 #include <stdio.h>
 #include "err.h"
 

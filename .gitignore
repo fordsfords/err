@@ -1,13 +1,23 @@
-# Test temporary files
+# Scratch files
 x
 x.*
 *.x
 *.tmp
-tmp.*
 *.tmp[0-9]
+tmp.*
 ~*
-.DS_Store
+*~
+*.bak
 *.log
+*.out
+*.pcap
+.DS_Store
+.mypy_cache
+.ruff_cache
+
+# Executable
+core.*
+a.out
 err_test
 example1
 example2
@@ -16,6 +26,7 @@ example2
 *.d
 
 # Object files
+__pycache__
 *.o
 *.ko
 *.obj

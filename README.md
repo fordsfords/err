@@ -1,5 +1,25 @@
 # err
-Err: Light-weight framework for C API error reporting.
+Light-weight framework for C API error reporting.
+
+
+## Table of contents
+
+<!-- mdtoc-start -->
+&bull; [err](#err)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Table of contents](#table-of-contents)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Introduction](#introduction)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Goals](#goals)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Usage](#usage)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Preparation](#preparation)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Example 1](#example-1)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Example 2](#example-2)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Random Details](#random-details)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [License](#license)  
+<!-- TOC created by '../mdtoc/mdtoc.pl README.md' (see https://github.com/fordsfords/mdtoc) -->
+<!-- mdtoc-end -->
+
+
+## Introduction
 
 The C language does not have a well-established methodology for
 APIs to report errors.
@@ -18,7 +38,8 @@ return status,
 or does check but only prints something unintelligible even to the
 code maintainers.
 
-# Goals
+
+### Goals
 
 The goals of "err" are to be:
 * Lightweight.
@@ -70,7 +91,8 @@ for some long-winded thoughts on error handling and code readability.
 My implementation has evolved since then, but is still based on the same
 principles.
 
-# Usage
+
+## Usage
 
 Here are the principles:
 
@@ -92,6 +114,7 @@ allow a caller to easily check for specific error cases.
 The definition of the error codes is the responsibility of the application.
 The "err" system does not establish a convention.
 
+
 ## Preparation
 
 Download the "err" repository from https://github.com/fordsfords/err
@@ -108,55 +131,16 @@ For Linux systems, you should be able to run the shell script "bld.sh".
 This will build and run the self-test,
 and will also extract and build (but not run) this README.md's example programs.
 
+
 ## Example 1
 
-This example shows the simplest usage, complete with a code bug.
-
-```c
-#include <stdio.h>
-#include "err.h"
-
-ERR_F reciprocal(double *result_rtn, double input_value)
-{
-  /* Sanity checks: assert that things are true that must be true. */
-  ERR_ASSRT(input_value != 0, 0);  /* Division by zero not allowed. */
-
-  *result_rtn = 1.0 / input_value;
-
-  return ERR_OK;
-}  /* reciprocal */
-
-
-ERR_F math_example(int argc, char **argv)
-{
-  double result;
-
-  ERR(reciprocal(&result, 4));
-  printf("1/4=%f\n", result);  fflush(stdout);
-
-  ERR(reciprocal(&result, 0));  /* BUG IN THE CODE!!! */
-  printf("Should not get here.\n");  fflush(stdout);
-
-  return ERR_OK;
-}  /* math_example */
-
-
-int main(int argc, char **argv)
-{
-  /* If error returns to outer-most main, abort. */
-  ERR_ABRT(math_example(argc, argv), stderr);
-
-  printf("Exiting\n");  fflush(stdout);
-
-  return 0;
-}  /* main */
-```
+[example1.c][example1.c] shows the simplest usage.
 
 Notice the lines:
-```c
+````c
   ERR(reciprocal(&result, 0));  /* BUG IN THE CODE!!! */
   printf("Should not get here.\n");  fflush(stdout);
-```
+````
 Since the reciprocal() function asserts that its input must not be zero,
 that call to reciprocal returns an active "err" object.
 The ERR() macro sees the returned "err" object,
@@ -164,7 +148,7 @@ adds some information to the stack trace,
 and returns to *its* caller.
 
 Here's the output from running this example:
-```
+````
 $ ./example1
 1/4=0.250000
 ERR_ABRT Failed!
@@ -185,7 +169,7 @@ Line: 7
 Code: 0
 Mesg: input_value != 0
 Abort trap: 6
-```
+````
 
 As you can see, you really need the source code to make much sense out of
 the stack trace (i.e. not user-friendly).
@@ -202,99 +186,14 @@ which lets ERR_ABRT() print the stack trace and produce a core dump.
 That's fine for internal errors that represent code bugs,
 but not for user errors, which should produce user-friendly responses.
 
+
 ## Example 2
 
-This interactive example shows more user-friendly error handling,
-with a different code bug:
-
-```c
-#include <stdio.h>
-#include "err.h"
-
-/* Error codes used by the reciprocol API. */
-#define E_INTERNAL_ERROR -1
-#define E_DIV_ZERO 1
-
-ERR_F reciprocal(double *result_rtn, double input_value)
-{
-  /* Sanity checks: assert that things are true that must be true. */
-  ERR_ASSRT(input_value != 0, E_DIV_ZERO);  /* Division by zero not allowed. */
-
-  if (input_value == 1) {  /* CODE BUG!!! */
-    ERR_THROW(E_INTERNAL_ERROR, "Internal consistency check failed");
-  }
-
-  *result_rtn = 1.0 / input_value;
-
-  return ERR_OK;
-}  /* reciprocal */
-
-
-ERR_F try_one_reciprocol(double input)
-{
-  double result;
-  err_t *err;
-
-  err = reciprocal(&result, input);
-  if (err == ERR_OK) {
-    printf("Reciprocol of %f is %f\n", input, result);
-    return ERR_OK;
-  }
-
-  /* An error was returned, handle it. */
-
-  if (err->code == E_DIV_ZERO) {
-    printf("division by zero not allowed. Try again.\n");  fflush(stdout);
-    err_dispose(err);  /* Since we are handling, delete the err object. */
-    return ERR_OK;
-  }
-
-  /* Unrecognized error. */
-  ERR_RETHROW(err, err->code);
-}  /* try_one_reciprocol */
-
-
-ERR_F math_example(int argc, char **argv)
-{
-  double input;
-
-  printf("Input (floating point number)? ");  fflush(stdout);
-  while (scanf("%lf", &input) == 1) {
-    ERR(try_one_reciprocol(input));
-
-    printf("Input? ");  fflush(stdout);
-  }
-  printf("No valid input found, exiting.\n");  fflush(stdout);
-
-  return ERR_OK;
-}  /* math_example */
-
-
-int main(int argc, char **argv)
-{
-  err_t *err;
-
-  /* If error returns to outer-most main, abort. */
-  err = math_example(argc, argv);
-  if (err) {
-    FILE *log_fp = fopen("err.log", "w");
-    if (log_fp == NULL) {
-      fprintf(stderr, "ERROR: could not open 'err.log'\n");
-      log_fp = stderr;
-    }
-    else {
-      fprintf(stderr, "UNHANDLED ERROR. See 'err.log' for details.\n");
-    }
-
-    ERR_ABRT(err, log_fp);  /* Print stack trace and dupm core. */
-  }
-
-  return 0;
-}  /* main */
-```
+[example2.c](example2.c) is an interactive example shows more user-friendly
+error handling:
 
 Here's the output from running this example and inputting 3, 0, 1:
-```
+````
 $ ./example2
 Input (floating point number)? 3
 Reciprocol of 3.000000 is 0.333333
@@ -327,9 +226,10 @@ File: example2.c
 Line: 14
 Code: -1
 Mesg: Internal consistency check failed
-```
+````
 
-# Random Details
+
+## Random Details
 
 There are a few miscellaneous details.
 
@@ -354,3 +254,23 @@ The "err" package is an attempt to provide some of the benefits of
 exceptions to a C program.
 If you're using Java, use exceptions.
 I'm not sure "err" has any advantages over Java exceptions.
+
+
+## License
+
+I want there to be NO barriers to using this code, so I am releasing it to the public domain.
+But "public domain" does not have an internationally agreed upon definition, so I use CC0:
+
+Copyright 2019-2024 Steven Ford http://geeky-boy.com and licensed
+"public domain" style under
+[CC0](http://creativecommons.org/publicdomain/zero/1.0/):
+![CC0](https://licensebuttons.net/p/zero/1.0/88x31.png "CC0")
+
+To the extent possible under law, the contributors to this project have
+waived all copyright and related or neighboring rights to this work.
+In other words, you can use this code for any purpose without any
+restrictions.  This work is published from: United States.  The project home
+is https://github.com/fordsfords/err
+
+To contact me, Steve Ford, project owner, you can find my email address
+at http://geeky-boy.com.  Can't see it?  Keep looking.

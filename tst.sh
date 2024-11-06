@@ -12,11 +12,12 @@ else :
 fi
 echo ""
 
-gcc $* -Werror -Wall -g -o err_test err.c err_test.c
+./bld.sh
 
 echo "./err_test x x (ignore any abort / core dump message)"
 ./err_test x x 2>tmp.1
-perl <tmp.1 -e \
+ST=$?; echo "ST=$ST"
+egrep -v "Aborted .core dumped" <tmp.1 | perl -e \
 ' $_=<>; /^ERR_ABRT Failed!$/                                    || die"ERR:$_";
   $_=<>; /^Stack trace:$/                                        || die"ERR:$_";
   $_=<>; /^----------------$/                                    || die"ERR:$_";
@@ -34,21 +35,21 @@ perl <tmp.1 -e \
   $_=<>; /^Line: /                                               || die"ERR:$_";
   $_=<>; /^Code: 3$/                                             || die"ERR:$_";
   $_=<>; /^Mesg: argc is > 2$/                                   || die"ERR:$_";
-  $_=<>; ! defined($_) || die $_; # check EOF
+  $_=<>; ! defined($_) || die "ERR: extra line: $_"; # check EOF
   print "OK\n";
 '
 if [ $? -ne 0 ]; then exit 1; fi
-echo ""
+echo "Test x OK"
 
 echo "./err_test 0"
 ./err_test 0 2>tmp.0
 perl <tmp.0 -e \
 ' $_=<>; /^OK$/                                                  || die"ERR:$_";
-  $_=<>; ! defined($_) || die $_; # check EOF
+  $_=<>; ! defined($_) || die "ERR: extra line: $_"; # check EOF
   print "OK\n";
 '
 if [ $? -ne 0 ]; then exit 1; fi
-echo ""
+echo "test 0 ok"
 
 # Test 1 doesn't work as expected on MacOS. Null is never returned from strdup.
 
@@ -58,15 +59,15 @@ perl <tmp.2 -e \
 ' $_=<>; /^funct_c$/                                             || die"ERR:$_";
   $_=<>; /^funct_b: dispose funct_c.s err$/                      || die"ERR:$_";
   $_=<>; /^OK$/                                                  || die"ERR:$_";
-  $_=<>; ! defined($_) || die $_; # check EOF
+  $_=<>; ! defined($_) || die "ERR: extra line: $_"; # check EOF
   print "OK\n";
 '
 if [ $? -ne 0 ]; then exit 1; fi
-echo ""
+echo "test 2 ok"
 
 echo "./err_test 3 (ignore any abort / core dump message)"
 ./err_test 3 2>tmp.3
-perl <tmp.3 -e \
+egrep -v "Aborted .core dumped" <tmp.3 | perl -e \
 ' $_=<>; /^funct_c$/                                             || die"ERR:$_";
   $_=<>; /^ERR_ABRT Failed!$/                                    || die"ERR:$_";
   $_=<>; /^Stack trace:$/                                        || die"ERR:$_";
@@ -90,8 +91,8 @@ perl <tmp.3 -e \
   $_=<>; /^Line: /                                               || die"ERR:$_";
   $_=<>; /^Code: 51$/                                            || die"ERR:$_";
   $_=<>; /^Mesg: funct_c always throws$/                         || die"ERR:$_";
-  $_=<>; ! defined($_) || die $_; # check EOF
+  $_=<>; ! defined($_) || die "ERR: extra line: $_"; # check EOF
   print "OK\n";
 '
 if [ $? -ne 0 ]; then exit 1; fi
-echo ""
+echo "test 3 ok"
