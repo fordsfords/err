@@ -2,11 +2,12 @@
 
 #include <stdio.h>
 #include "err.h"
+#include "err_codes.h"
 
 ERR_F reciprocal(double *result_rtn, double input_value)
 {
   /* Sanity checks: assert that things are true that must be true. */
-  ERR_ASSRT(input_value != 0, 0);  /* Division by zero not allowed. */
+  ERR_ASSRT(input_value != 0, ERR_CODE_PARAM);  /* Division by zero not allowed. */
 
   *result_rtn = 1.0 / input_value;
 
@@ -21,7 +22,7 @@ ERR_F math_example(int argc, char **argv)
   ERR(reciprocal(&result, 4));
   printf("1/4=%f\n", result);  fflush(stdout);
 
-  ERR(reciprocal(&result, 0));  /* BUG IN THE CODE!!! */
+  ERR(reciprocal(&result, 0));  /* Division by 0! */
   printf("Should not get here.\n");  fflush(stdout);
 
   return ERR_OK;

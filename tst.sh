@@ -12,12 +12,13 @@ else :
 fi
 echo ""
 
+rm -f *.log core.* tmp.*
+
 ./bld.sh
 
 echo "./err_test x x (ignore any abort / core dump message)"
-./err_test x x 2>tmp.1
-ST=$?; echo "ST=$ST"
-egrep -v "Aborted .core dumped" <tmp.1 | perl -e \
+./err_test x x 2>tmp.x
+egrep -v "Aborted" <tmp.x | perl -e \
 ' $_=<>; /^ERR_ABRT Failed!$/                                    || die"ERR:$_";
   $_=<>; /^Stack trace:$/                                        || die"ERR:$_";
   $_=<>; /^----------------$/                                    || die"ERR:$_";
@@ -43,7 +44,7 @@ echo "Test x OK"
 
 echo "./err_test 0"
 ./err_test 0 2>tmp.0
-perl <tmp.0 -e \
+egrep -v "Aborted" <tmp.0 | perl -e \
 ' $_=<>; /^OK$/                                                  || die"ERR:$_";
   $_=<>; ! defined($_) || die "ERR: extra line: $_"; # check EOF
   print "OK\n";
@@ -55,7 +56,7 @@ echo "test 0 ok"
 
 echo "./err_test 2"
 ./err_test 2 2>tmp.2
-perl <tmp.2 -e \
+egrep -v "Aborted" <tmp.2 | perl -e \
 ' $_=<>; /^funct_c$/                                             || die"ERR:$_";
   $_=<>; /^funct_b: dispose funct_c.s err$/                      || die"ERR:$_";
   $_=<>; /^OK$/                                                  || die"ERR:$_";
@@ -67,7 +68,7 @@ echo "test 2 ok"
 
 echo "./err_test 3 (ignore any abort / core dump message)"
 ./err_test 3 2>tmp.3
-egrep -v "Aborted .core dumped" <tmp.3 | perl -e \
+egrep -v "Aborted" <tmp.3 | perl -e \
 ' $_=<>; /^funct_c$/                                             || die"ERR:$_";
   $_=<>; /^ERR_ABRT Failed!$/                                    || die"ERR:$_";
   $_=<>; /^Stack trace:$/                                        || die"ERR:$_";

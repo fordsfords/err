@@ -38,11 +38,11 @@ extern "C" {
 
 /* Simple macro to skip past the dir name of a full path (if any). */
 #if defined(_WIN32)
-#  define ERR_BASENAME(_p)\
-    ((strrchr(_p, '\\') == NULL) ? (_p) : (strrchr(_p, '\\')+1))
+#  define ERR_BASENAME(err__p)\
+    ((strrchr(err__p, '\\') == NULL) ? (err__p) : (strrchr(err__p, '\\')+1))
 #else
-#  define ERR_BASENAME(_p)\
-    ((strrchr(_p, '/') == NULL) ? (_p) : (strrchr(_p, '/')+1))
+#  define ERR_BASENAME(err__p)\
+    ((strrchr(err__p, '/') == NULL) ? (err__p) : (strrchr(err__p, '/')+1))
 #endif
 
 /* Applications that return an err_t should be declared with this macro. */
@@ -50,45 +50,45 @@ extern "C" {
 
 
 /* Throwing an error means creating an err object and returning it. */
-#define ERR_THROW(_code, _mesg) do { \
-  return err_throw(__FILE__, __LINE__, _code, _mesg); \
+#define ERR_THROW(err__code, err__mesg) do { \
+  return err_throw(__FILE__, __LINE__, err__code, err__mesg); \
 } while (0)
 
 
 /* Assert/throw combines sanity test with throw. */
-#define ERR_ASSRT(_cond_expr, _code) do { \
-  if (!(_cond_expr)) { \
-    return err_throw(__FILE__, __LINE__, _code, #_cond_expr); \
+#define ERR_ASSRT(err__cond_expr, err__code) do { \
+  if (!(err__cond_expr)) { \
+    return err_throw(__FILE__, __LINE__, err__code, #err__cond_expr); \
   } \
 } while (0)
 
 
 /* Shortcut abort-on-error macro. Prints stack trace to stderr. */
-#define ERR_ABRT(_funct_call, _stream) do { \
-  err_t *_err = (_funct_call); \
-  if (_err) { \
-    _err = err_rethrow(__FILE__, __LINE__, _err, _err->code, #_funct_call); \
-    fprintf(_stream, "ERR_ABRT Failed!\nStack trace:\n----------------\n"); \
-    err_print(_err, _stream); \
-    fflush(_stream); \
+#define ERR_ABRT(err__funct_call, err__stream) do { \
+  err_t *err__err = (err__funct_call); \
+  if (err__err) { \
+    err__err = err_rethrow(__FILE__, __LINE__, err__err, err__err->code, #err__funct_call); \
+    fprintf(err__stream, "ERR_ABRT Failed!\nStack trace:\n----------------\n"); \
+    err_print(err__err, err__stream); \
+    fflush(err__stream); \
     abort(); \
   } \
 } while (0)
 
 
 /* Implicit re-throw. */
-#define ERR(_funct_call) do { \
-  err_t *_err = (_funct_call); \
-  if (_err) { \
-    return err_rethrow(__FILE__, __LINE__, _err, _err->code, #_funct_call); \
+#define ERR(err__funct_call) do { \
+  err_t *err__err = (err__funct_call); \
+  if (err__err) { \
+    return err_rethrow(__FILE__, __LINE__, err__err, err__err->code, #err__funct_call); \
   } \
 } while (0)
 
 
 /* Explicit re-throw. */
-#define ERR_RETHROW(_err, _code) do { \
-  return err_rethrow(__FILE__, __LINE__, _err, _err->code, \
-                     "Re-throwing " #_err); \
+#define ERR_RETHROW(err__err, err__code) do { \
+  return err_rethrow(__FILE__, __LINE__, err__err, err__err->code, \
+                     "Re-throwing " #err__err); \
 } while (0)
 
 

@@ -2,18 +2,17 @@
 
 #include <stdio.h>
 #include "err.h"
+#include "err_codes.h"
 
-/* Error codes used by the reciprocol API. */
-#define E_INTERNAL_ERROR -1
-#define E_DIV_ZERO 1
 
 ERR_F reciprocal(double *result_rtn, double input_value)
 {
   /* Sanity checks: assert that things are true that must be true. */
-  ERR_ASSRT(input_value != 0, E_DIV_ZERO);  /* Division by zero not allowed. */
+  ERR_ASSRT(input_value != 0, ERR_CODE_PARAM);  /* Division by zero not allowed. */
 
-  if (input_value == 1) {  /* CODE BUG!!! */
-    ERR_THROW(E_INTERNAL_ERROR, "Internal consistency check failed");
+  /* For whatever reason, input value should never be 1. */
+  if (input_value == 1) {
+    ERR_THROW(ERR_CODE_INTERNAL, "input_value == 1");
   }
 
   *result_rtn = 1.0 / input_value;
@@ -35,7 +34,7 @@ ERR_F try_one_reciprocol(double input)
 
   /* An error was returned, handle it. */
 
-  if (err->code == E_DIV_ZERO) {
+  if (err->code == ERR_CODE_PARAM) {
     printf("division by zero not allowed. Try again.\n");  fflush(stdout);
     err_dispose(err);  /* Since we are handling, delete the err object. */
     return ERR_OK;
