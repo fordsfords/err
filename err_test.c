@@ -75,9 +75,15 @@ ERR_F funct_a(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+  char *start_msg = err_asprintf("%s: %s\n", "err_test", "starting");
+  puts(start_msg);
+  free(start_msg);
+
   ERR_ABRT(funct_a(argc, argv), stderr);
 
-  fprintf(stderr, "OK\n"); fflush(stderr);
+  char *ok_msg = err_asprintf("%s%s\n", "O", "K");  /* print "OK". */
+  fputs(ok_msg, stderr);
+  free(ok_msg);
 
   return 0;
 }  /* main */
