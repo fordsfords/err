@@ -36,7 +36,7 @@ ERR_F funct_b(int argc, char **argv)
     char *big_mesg = (char *)malloc(65536*1024+1);
     memset(big_mesg, 'x', 65536*1024);  big_mesg[65536*1024] = '\0';
 
-    err = err_throw(__FILE__, __LINE__, 65536, big_mesg);
+    err = err_throw_v(__FILE__, __LINE__, 65536, big_mesg);
     while (1) {
       err = err_rethrow(__FILE__, __LINE__, err, 65535, big_mesg);
     }
