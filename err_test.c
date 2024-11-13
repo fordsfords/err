@@ -1,4 +1,4 @@
-/* err_tst.c - self-test.
+/* err_test.c - self-test.
  *
  * This code and its documentation is Copyright 2019, 2019 Steven Ford,
  * http://geeky-boy.com and licensed "public domain" style under Creative
@@ -15,64 +15,161 @@
 #include <stdlib.h>
 #include "err.h"
 
+#define E(e__test) do { \
+  err_t *e__err = (e__test); \
+  if (e__err != ERR_OK) { \
+    printf("ERROR [%s:%d]: '%s' returned error\n", __FILE__, __LINE__, #e__test); \
+    ERR_ABRT(e__err, stdout); \
+    exit(1); \
+  } \
+} while (0)
 
-ERR_F funct_c(int argc, char **argv)
+#define ASSRT(assrt__cond) do { \
+  if (! (assrt__cond)) { \
+    printf("ERROR [%s:%d]: assert '%s' failed\n", __FILE__, __LINE__, #assrt__cond); \
+    exit(1); \
+  } \
+} while (0)
+
+
+/* Options */
+int o_testnum;
+
+
+char usage_str[] = "Usage: err_test [-h] [-t testnum]";
+void usage(char *msg) {
+  if (msg) fprintf(stderr, "\n%s\n\n", msg);
+  fprintf(stderr, "%s\n", usage_str);
+  exit(1);
+}  /* usage */
+
+void help() {
+  printf("%s\n"
+    "where:\n"
+    "  -h - print help\n"
+    "  -t testnum - Specify which test to run [1].\n"
+    "For details, see https://github.com/fordsfords/err\n",
+    usage_str);
+  exit(0);
+}  /* help */
+
+
+void parse_cmdline(int argc, char **argv) {
+  int i;
+
+  /* Since this is Unix and Windows, don't use getopts(). */
+  for (i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "-h") == 0) {
+      help();  exit(0);
+
+    } else if (strcmp(argv[i], "-t") == 0) {
+      if ((i + 1) < argc) {
+        i++;
+        o_testnum = atoi(argv[i]);
+      } else { fprintf(stderr, "Error, -t requires test number\n");  exit(1); }
+
+    } else { fprintf(stderr, "Error, unknown option '%s'\n", argv[i]);  exit(1); }
+  }  /* for i */
+}  /* parse_cmdline */
+
+
+ERR_F funct_c(int c)
 {
-  fprintf(stderr, "funct_c\n"); fflush(stdout); fflush(stderr);
-  ERR_THROW(*argv[1], "funct_c always throws");
+  ERR_THROW(1, "funct_c always throws 1");
 }
 
 
-ERR_F funct_b(int argc, char **argv)
+ERR_F funct_b(int b)
 {
   err_t *err;
-  if (argc > 2) ERR_THROW(argc, "argc is > 2");
 
-
-  if (*argv[1] == '0') {
+  if (b == 0) {
     return ERR_OK;
   }
-  else if (*argv[1] == '1') {
+
+  if (b == 1) {
+    ERR_THROW(1, "b is %d", b);
+  }
+
+  if (b == 2) {
     char *big_mesg = (char *)malloc(65536*1024+1);
     memset(big_mesg, 'x', 65536*1024);  big_mesg[65536*1024] = '\0';
 
-    err = err_throw_v(__FILE__, __LINE__, 65536, big_mesg);
-    while (1) {
-      err = err_rethrow(__FILE__, __LINE__, err, 65535, big_mesg);
-    }
-  }
-  else if (*argv[1] == '2') {
-    err = funct_c(argc, argv);
-    fprintf(stderr, "funct_b: dispose funct_c's err\n"); fflush(stderr);
-    err_dispose(err);
-  }
-  else {
-    ERR(funct_c(argc, argv));
+    ERR_THROW(2, big_mesg);
   }
 
+  if (b == 3) {
+    err = funct_c(3);
+    if (err) { ERR_RETHROW(err, 3); }
+  }
+
+#ifdef TST_ERR_F
   /* ERR_F uses __attribute__ ((__warn_unused_result__)) which generates a
    * warning if the caller doesn't use the return value.
    */
-#ifdef TST_ERR_F
-  funct_c(argc, argv);  /* compiler warning. */
+  funct_c(0);  /* compiler warning. */
 #endif
 
+  ASSRT(err_asprintf("should not get here") == NULL);
   return ERR_OK;
-}
+}  /* funct_b */
 
 
-ERR_F funct_a(int argc, char **argv)
-{
-  err_t *err = ERR_OK;
+void test1() {
+  err_t *err;
+  char *start_msg = err_asprintf("%s: %s\n", "err_test", "starting");
+  ASSRT(strcmp(start_msg, "err_test: starting\n");
+  free(start_msg);
 
-  if (argc == 1) ERR_THROW(1, "argc is 1");
+  /* success */
+  E(funct_b(0));
 
-  err = funct_b(argc, argv);
-  if (err) return err_rethrow(__FILE__, __LINE__, err, 2, "funct_a: rethrow from funct_b");
+  /* printf-style mesg */
+  err = funct_b(1);
+  ASSRT(err->code == 1);
+  ASSRT(strcmp(err->mesg, "b is 1") == 0);
+  ASSRT(err->stacktrace == NULL);
+  err_dispose(err);  /* Since we are handling, delete the err object. */
 
-  return ERR_OK;
-}  /* funct_a */
+  /* big mesg */
+  err = funct_b(2);
+  ASSRT(err->code == 2);
+  ASSRT(strlen(err->mesg) == 65536*1024);
+  ASSRT(err->mesg[0] == 'x' && err->mesg[65536*1024 - 1] == 'x'
+  ASSRT(err->stacktrace == NULL);
+  err_dispose(err);
 
+  /* rethrow */
+  err = funct_b(3);
+  ASSRT(err->code == 3);
+  ASSRT(strcmp(err->mesg, "b is 1") == 0);
+  ASSRT(err->stacktrace == NULL);
+  err_dispose(err);  /* Since we are handling, delete the err object. */
+  ERR_THROW(1, "funct_c always throws 1");
+}  /* test1 */
+
+
+void test2() {
+}  /* test2 */
+
+
+int main(int argc, char **argv) {
+  parse_cmdline(argc, argv);
+
+  if (o_testnum == 0 || o_testnum == 1) {
+    test1();
+    printf("test1: success\n");
+  }
+
+  if (o_testnum == 0 || o_testnum == 2) {
+    test2();
+    printf("test1: success\n");
+  }
+
+  return 0;
+}  /* main */
+
+/*
 int main(int argc, char **argv)
 {
   char *start_msg = err_asprintf("%s: %s\n", "err_test", "starting");
@@ -86,4 +183,5 @@ int main(int argc, char **argv)
   free(ok_msg);
 
   return 0;
-}  /* main */
+}
+*/
