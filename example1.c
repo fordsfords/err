@@ -7,7 +7,7 @@
 ERR_F reciprocal(double *result_rtn, double input_value)
 {
   /* Sanity checks: assert that things are true that must be true. */
-  ERR_ASSRT(input_value != 0, ERR_CODE_PARAM);  /* Division by zero not allowed. */
+  ERR_ASSRT(input_value != 0, ERR_ERR_PARAM);  /* Division by zero not allowed. */
 
   *result_rtn = 1.0 / input_value;
 
@@ -32,7 +32,7 @@ ERR_F math_example(int argc, char **argv)
 int main(int argc, char **argv)
 {
   /* If error returns to outer-most main, abort. */
-  ERR_ABRT(math_example(argc, argv), stderr);
+  ERR_ABRT_ON_ERR(math_example(argc, argv), stderr);
 
   printf("Exiting\n");  fflush(stdout);
 

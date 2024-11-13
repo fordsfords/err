@@ -1,99 +1,46 @@
-#!/bin/sh
-# tst.sh
+#!/bin/bash
+# tst.sh - generic test script
+#   Tip: script -c ./tst.sh tst.log
 
-echo TST_ERR_F
-gcc $* -DTST_ERR_F -Werror -Wall -g -o err_test err.c err_test.c 2>tmp.gcc
-ST=$?
-if [ $ST -eq 0 ]; then :
-  echo "ERROR, should not have compiled clean!" >&2
-  exit 1
-else :
-  echo "OK"
+SINGLE_T="0"  # Do all tests
+if [ -n "$1" ]; then SINGLE_T="$1"; fi
+
+F="tst.sh"  # Could also use `basename $0`
+B="./err_test"   # Executable under test.
+
+TEST() {
+  echo "Test $T [$F:${BASH_LINENO[0]}]: $1 `date`" >$B.$T.log
+  cat $B.$T.log
+}  # TEST
+
+ASSRT() {
+  eval "test $1"
+
+  if [ $? -ne 0 ]; then
+    echo "ASSRT ERROR, Test $T [$F:${BASH_LINENO[0]}]: not true: '$1' `date`" | tee -a $B.$T.log
+    exit 1
+  fi
+}  # ASSRT
+
+OK() {
+  echo "Test $T [$F:${BASH_LINENO[0]}]: OK"
+}  # OK
+
+
+./bld.sh; ASSRT "$? -eq 0"
+
+rm -f *.log core.*
+
+T=1
+if [ "$SINGLE_T" -eq 0 -o "$SINGLE_T" -eq "$T" ]; then :
+  TEST
+  $B -t $T 2>&1 | tee -a $B.$T.log;  ST=${PIPESTATUS[0]}; ASSRT "$ST -eq 0"
+  OK
 fi
-echo ""
 
-rm -f *.log core.* tmp.*
-
-./bld.sh
-
-echo "./err_test x x (ignore any abort / core dump message)"
-./err_test x x 2>tmp.x
-egrep -v "Aborted" <tmp.x | perl -e \
-' $_=<>; /^ERR_ABRT Failed!$/                                    || die"ERR:$_";
-  $_=<>; /^Stack trace:$/                                        || die"ERR:$_";
-  $_=<>; /^----------------$/                                    || die"ERR:$_";
-  $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
-  $_=<>; /^Line: /                                               || die"ERR:$_";
-  $_=<>; /^Code: 2$/                                             || die"ERR:$_";
-  $_=<>; /^Mesg: funct_a\(argc, argv\)$/                         || die"ERR:$_";
-  $_=<>; /^----------------$/                                    || die"ERR:$_";
-  $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
-  $_=<>; /^Line: /                                               || die"ERR:$_";
-  $_=<>; /^Code: 2$/                                             || die"ERR:$_";
-  $_=<>; /^Mesg: funct_a: rethrow from funct_b$/                 || die"ERR:$_";
-  $_=<>; /^----------------$/                                    || die"ERR:$_";
-  $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
-  $_=<>; /^Line: /                                               || die"ERR:$_";
-  $_=<>; /^Code: 3$/                                             || die"ERR:$_";
-  $_=<>; /^Mesg: argc is > 2$/                                   || die"ERR:$_";
-  $_=<>; ! defined($_) || die "ERR: extra line: $_"; # check EOF
-  print "OK\n";
-'
-if [ $? -ne 0 ]; then exit 1; fi
-echo "Test x OK"
-
-echo "./err_test 0"
-./err_test 0 2>tmp.0
-egrep -v "Aborted" <tmp.0 | perl -e \
-' $_=<>; /^OK$/                                                  || die"ERR:$_";
-  $_=<>; ! defined($_) || die "ERR: extra line: $_"; # check EOF
-  print "OK\n";
-'
-if [ $? -ne 0 ]; then exit 1; fi
-echo "test 0 ok"
-
-# Test 1 doesn't work as expected on MacOS. Null is never returned from strdup.
-
-echo "./err_test 2"
-./err_test 2 2>tmp.2
-egrep -v "Aborted" <tmp.2 | perl -e \
-' $_=<>; /^funct_c$/                                             || die"ERR:$_";
-  $_=<>; /^funct_b: dispose funct_c.s err$/                      || die"ERR:$_";
-  $_=<>; /^OK$/                                                  || die"ERR:$_";
-  $_=<>; ! defined($_) || die "ERR: extra line: $_"; # check EOF
-  print "OK\n";
-'
-if [ $? -ne 0 ]; then exit 1; fi
-echo "test 2 ok"
-
-echo "./err_test 3 (ignore any abort / core dump message)"
-./err_test 3 2>tmp.3
-egrep -v "Aborted" <tmp.3 | perl -e \
-' $_=<>; /^funct_c$/                                             || die"ERR:$_";
-  $_=<>; /^ERR_ABRT Failed!$/                                    || die"ERR:$_";
-  $_=<>; /^Stack trace:$/                                        || die"ERR:$_";
-  $_=<>; /^----------------$/                                    || die"ERR:$_";
-  $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
-  $_=<>; /^Line: /                                               || die"ERR:$_";
-  $_=<>; /^Code: 2$/                                             || die"ERR:$_";
-  $_=<>; /^Mesg: funct_a\(argc, argv\)$/                         || die"ERR:$_";
-  $_=<>; /^----------------$/                                    || die"ERR:$_";
-  $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
-  $_=<>; /^Line: /                                               || die"ERR:$_";
-  $_=<>; /^Code: 2$/                                             || die"ERR:$_";
-  $_=<>; /^Mesg: funct_a: rethrow from funct_b$/                 || die"ERR:$_";
-  $_=<>; /^----------------$/                                    || die"ERR:$_";
-  $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
-  $_=<>; /^Line: /                                               || die"ERR:$_";
-  $_=<>; /^Code: 51$/                                            || die"ERR:$_";
-  $_=<>; /^Mesg: funct_c\(argc, argv\)$/                         || die"ERR:$_";
-  $_=<>; /^----------------$/                                    || die"ERR:$_";
-  $_=<>; /^File: err_test.c$/                                    || die"ERR:$_";
-  $_=<>; /^Line: /                                               || die"ERR:$_";
-  $_=<>; /^Code: 51$/                                            || die"ERR:$_";
-  $_=<>; /^Mesg: funct_c always throws$/                         || die"ERR:$_";
-  $_=<>; ! defined($_) || die "ERR: extra line: $_"; # check EOF
-  print "OK\n";
-'
-if [ $? -ne 0 ]; then exit 1; fi
-echo "test 3 ok"
+T=2
+if [ "$SINGLE_T" -eq 0 -o "$SINGLE_T" -eq "$T" ]; then :
+  TEST
+  $B -t $T 2>&1 | tee -a $B.$T.log;  ST=${PIPESTATUS[0]}; ASSRT "$ST -eq 134"
+  OK
+fi

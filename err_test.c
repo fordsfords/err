@@ -19,7 +19,7 @@
   err_t *e__err = (e__test); \
   if (e__err != ERR_OK) { \
     printf("ERROR [%s:%d]: '%s' returned error\n", __FILE__, __LINE__, #e__test); \
-    ERR_ABRT(e__err, stdout); \
+    ERR_ABRT_ON_ERR(e__err, stdout); \
     exit(1); \
   } \
 } while (0)
@@ -75,7 +75,7 @@ void parse_cmdline(int argc, char **argv) {
 
 ERR_F funct_c(int c)
 {
-  ERR_THROW(1, "funct_c always throws 1");
+  ERR_THROW(ERR_ERR_PARAM, "funct_c always throws %s", ERR_ERR_PARAM);
 }
 
 
@@ -88,19 +88,19 @@ ERR_F funct_b(int b)
   }
 
   if (b == 1) {
-    ERR_THROW(1, "b is %d", b);
+    ERR_THROW(ERR_ERR_NOMEM, "b is %d", b);
   }
 
   if (b == 2) {
     char *big_mesg = (char *)malloc(65536*1024+1);
     memset(big_mesg, 'x', 65536*1024);  big_mesg[65536*1024] = '\0';
 
-    ERR_THROW(2, big_mesg);
+    ERR_THROW(ERR_ERR_INTERNAL, big_mesg);
   }
 
   if (b == 3) {
     err = funct_c(3);
-    if (err) { ERR_RETHROW(err, 3); }
+    if (err) { ERR_RETHROW(err, "b=%d", b); }
   }
 
 #ifdef TST_ERR_F
@@ -117,8 +117,9 @@ ERR_F funct_b(int b)
 
 void test1() {
   err_t *err;
+
   char *start_msg = err_asprintf("%s: %s\n", "err_test", "starting");
-  ASSRT(strcmp(start_msg, "err_test: starting\n");
+  ASSRT(strcmp(start_msg, "err_test: starting\n") == 0);
   free(start_msg);
 
   /* success */
@@ -126,30 +127,40 @@ void test1() {
 
   /* printf-style mesg */
   err = funct_b(1);
-  ASSRT(err->code == 1);
+  ASSRT(strcmp(err->func, "funct_b") == 0);
+  ASSRT(err->code == ERR_ERR_NOMEM);
   ASSRT(strcmp(err->mesg, "b is 1") == 0);
   ASSRT(err->stacktrace == NULL);
   err_dispose(err);  /* Since we are handling, delete the err object. */
 
   /* big mesg */
   err = funct_b(2);
-  ASSRT(err->code == 2);
+  ASSRT(strcmp(err->func, "funct_b") == 0);
+  ASSRT(err->code == ERR_ERR_INTERNAL);
   ASSRT(strlen(err->mesg) == 65536*1024);
-  ASSRT(err->mesg[0] == 'x' && err->mesg[65536*1024 - 1] == 'x'
+  ASSRT(err->mesg[0] == 'x' && err->mesg[65536*1024 - 1] == 'x');
   ASSRT(err->stacktrace == NULL);
   err_dispose(err);
 
   /* rethrow */
   err = funct_b(3);
-  ASSRT(err->code == 3);
-  ASSRT(strcmp(err->mesg, "b is 1") == 0);
-  ASSRT(err->stacktrace == NULL);
+  ASSRT(strcmp(err->func, "funct_b") == 0);
+  ASSRT(err->code == ERR_ERR_PARAM);
+  ASSRT(strcmp(err->mesg, "b=3") == 0);
+  ASSRT(err->stacktrace);
+  ASSRT(strcmp(err->stacktrace->func, "funct_c") == 0);
+  ASSRT(err->stacktrace->code == ERR_ERR_PARAM);
+  ASSRT(strcmp(err->stacktrace->mesg, "funct_c always throws ERR_ERR_PARAM") == 0);
+  ASSRT(err->stacktrace->stacktrace == NULL);
   err_dispose(err);  /* Since we are handling, delete the err object. */
-  ERR_THROW(1, "funct_c always throws 1");
 }  /* test1 */
 
 
 void test2() {
+  /* rethrow abort test */
+  ERR_ABRT_ON_ERR(funct_b(3), stderr);
+
+  ASSRT(err_asprintf("should not get here") == NULL);
 }  /* test2 */
 
 
@@ -168,20 +179,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }  /* main */
-
-/*
-int main(int argc, char **argv)
-{
-  char *start_msg = err_asprintf("%s: %s\n", "err_test", "starting");
-  puts(start_msg);
-  free(start_msg);
-
-  ERR_ABRT(funct_a(argc, argv), stderr);
-
-  char *ok_msg = err_asprintf("%s%s\n", "O", "K");  /* print "OK". */
-  fputs(ok_msg, stderr);
-  free(ok_msg);
-
-  return 0;
-}
-*/
