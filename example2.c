@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include "err.h"
-#include "err_codes.h"
 
 
 ERR_F reciprocal(double *result_rtn, double input_value)
