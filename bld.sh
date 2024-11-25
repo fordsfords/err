@@ -14,11 +14,11 @@ echo "Building code"
 
 rm -f err_test example1 example2
 
-gcc $* -Werror -Wall -g -o err_test err.c err_test.c
+gcc $* -std=c99 -pedantic -Wall -Wextra -Werror -g -o err_test err.c err_test.c
 if [ $? -ne 0 ]; then exit 1; fi
 
-gcc $* -Werror -Wall -g -o example1 err.c example1.c
+gcc $* -std=c99 -pedantic -Wall -Wextra -Werror -g -o example1 err.c example1.c
 if [ $? -ne 0 ]; then exit 1; fi
 
-gcc $* -Werror -Wall -g -o example2 err.c example2.c
+gcc $* -std=c99 -pedantic -Wall -Wextra -Werror -g -o example2 err.c example2.c
 if [ $? -ne 0 ]; then exit 1; fi

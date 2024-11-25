@@ -73,7 +73,7 @@ void parse_cmdline(int argc, char **argv) {
 }  /* parse_cmdline */
 
 
-ERR_F funct_c(int c)
+ERR_F funct_c()
 {
   ERR_THROW(ERR_ERR_PARAM, "funct_c always throws %s", ERR_ERR_PARAM);
 }
@@ -99,7 +99,7 @@ ERR_F funct_b(int b)
   }
 
   if (b == 3) {
-    err = funct_c(3);
+    err = funct_c();
     if (err) { ERR_RETHROW(err, "b=%d", b); }
   }
 
@@ -107,7 +107,7 @@ ERR_F funct_b(int b)
   /* ERR_F uses __attribute__ ((__warn_unused_result__)) which generates a
    * warning if the caller doesn't use the return value.
    */
-  funct_c(0);  /* compiler warning. */
+  funct_c();  /* compiler warning. */
 #endif
 
   ASSRT(err_asprintf("should not get here") == NULL);

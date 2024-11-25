@@ -22,17 +22,21 @@ ERR_F reciprocal(double *result_rtn, double input_value)
 
 ERR_F try_one_reciprocol(double input)
 {
-  double result;
+  double *result;  /* Test dynamic memory. */
   err_t *err;
 
-  err = reciprocal(&result, input);
+  ERR_ASSRT(result = malloc(sizeof(double)), ERR_ERR_NOMEM);
+
+  err = reciprocal(result, input);
   if (err == ERR_OK) {
-    printf("Reciprocol of %f is %f\n", input, result);
+    printf("Reciprocol of %f is %f\n", input, *result);
+    free(result);
     return ERR_OK;
   }
 
   /* An error was returned, handle it. */
 
+  free(result);
   if (err->code == ERR_ERR_PARAM) {
     printf("division by zero not allowed. Try again.\n");  fflush(stdout);
     err_dispose(err);  /* Since we are handling, delete the err object. */
@@ -62,6 +66,8 @@ ERR_F math_example()
 
 int main(int argc, char **argv)
 {
+  if (argc > 1) { fprintf(stderr, "Warning, parameter '%s' not expected.\n", argv[1]); }
+
   /* If error returns to outer-most main, abort. */
   ERR_ABRT_ON_ERR(math_example(), stderr);
 

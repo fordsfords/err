@@ -14,7 +14,7 @@ ERR_F reciprocal(double *result_rtn, double input_value)
 }  /* reciprocal */
 
 
-ERR_F math_example(int argc, char **argv)
+ERR_F math_example()
 {
   double result;
 
@@ -30,6 +30,8 @@ ERR_F math_example(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+  if (argc > 1) { fprintf(stderr, "Warning, parameter '%s' not expected.\n", argv[1]); }
+
   /* If error returns to outer-most main, abort. */
   ERR_ABRT_ON_ERR(math_example(argc, argv), stderr);
 
