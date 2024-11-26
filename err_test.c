@@ -92,7 +92,8 @@ ERR_F funct_b(int b)
   }
 
   if (b == 2) {
-    char *big_mesg = (char *)malloc(65536*1024+1);
+    char *big_mesg;
+    ERR(err_calloc((void **)&big_mesg, 1, 65536*1024 + 1));
     memset(big_mesg, 'x', 65536*1024);  big_mesg[65536*1024] = '\0';
 
     ERR_THROW(ERR_ERR_INTERNAL, big_mesg);

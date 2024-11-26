@@ -25,7 +25,7 @@ ERR_F try_one_reciprocol(double input)
   double *result;  /* Test dynamic memory. */
   err_t *err;
 
-  ERR_ASSRT(result = malloc(sizeof(double)), ERR_ERR_NOMEM);
+  ERR(err_calloc((void **)&result, 1, sizeof(double)));
 
   err = reciprocal(result, input);
   if (err == ERR_OK) {
