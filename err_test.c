@@ -111,7 +111,8 @@ ERR_F funct_b(int b)
   funct_c();  /* compiler warning. */
 #endif
 
-  ASSRT(err_asprintf("should not get here") == NULL);
+  char *s1;
+  E(err_asprintf(&s1, "should not get here"));
   return ERR_OK;
 }  /* funct_b */
 
@@ -119,7 +120,8 @@ ERR_F funct_b(int b)
 void test1() {
   err_t *err;
 
-  char *start_msg = err_asprintf("%s: %s\n", "err_test", "starting");
+  char *start_msg;
+  E(err_asprintf(&start_msg, "%s: %s\n", "err_test", "starting"));
   ASSRT(strcmp(start_msg, "err_test: starting\n") == 0);
   free(start_msg);
 
@@ -161,7 +163,8 @@ void test2() {
   /* rethrow abort test */
   ERR_ABRT_ON_ERR(funct_b(3), stderr);
 
-  ASSRT(err_asprintf("should not get here") == NULL);
+  char *s1;
+  E(err_asprintf(&s1, "should not get here"));
 }  /* test2 */
 
 
