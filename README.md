@@ -103,17 +103,96 @@ NULL).
 1. An error is returned using the ERR_ASSRT() or ERR_THROW() macro,
 which create an "err" object and returns it.
 1. If your code calls a function that returns an "err" object,
-there's a shortcut ERR() if you just want to return that error to your caller
-(analogous to an uncaught exception).
-Otherwise, you can examine the err object to decide how you want to handle it.
+you can compare the return value against "ERR_OK" to test for success.
+If it's not ok, then you can either handle the error, or you can
+ERR_RETHROW() the same error.
+There's a shortcut, ERR(), that checks for error and rethrows it in one step.
 1. If an "err" object is returned all the way to the outer-most
-level of a program (i.e. an unhandled "err"), the program can use ERR_ABRT()
-to print a stack trace to standard error and invoke "abort()" to dump core.
-1. The "err" system supports an integer error code that is intended to
+level of a program (i.e. an unhandled "err"), the program can use
+ERR_ABRT_ON_ERR() to detect the unhandled error, print a stack dump,
+and call "abort()", which generates a core file.
+Alternatively, you can call "ERR_EXIT_ON_ERR()" to get the stack dump
+but call "exit(1)" instead of aborting.
+1. The "err" system supports an error code that is intended to
 allow a caller to easily check for specific error cases.
-The definition of the error codes is the responsibility of the application.
-The "err" system does not establish a convention.
+See [Error Codes](#error-codes) for details.
 
+### Error Codes
+
+In most programs, an error coe is an integer, often represented
+symbolically with a "#define".
+This follows the model of Unix where a function might return an
+error indicator and set "errno" to a numeric value describing the
+error. Those numeric values are assigned symbols in "errno.h".
+So the symbol "NOMEM" has the value 12.
+
+One big problem with this approach is that there's no good way to manage those
+values across projects.
+So, for example, if the "lsim" project uses the "cfg" and "hmap" sub-projects,
+each one will define its own set of error code values, and they can alias.
+In other words, the number 12 from a "cfg" function might be `CFG_ERR_BADFILE`
+while an "hmap" function might treat 12 as `HMAP_ERR_NOTFOUND`.
+
+Also, there is also not an easy way to translate the numeric value into
+something more human-readable.
+
+I've established a different approach to error codes.
+Instead of an integer, it is a character pointer.
+And what does it point at?
+A string buffer containing the text of the symbolic name.
+So, for example, if a function calls a function from the
+"err" project and it returns an error, the error code might be ERR_ERR_NOMEM,
+but instead of being an integer, it's a pointer to the string "ERR_ERR_NOMEM".
+
+This is implemented with a big of macro magic.
+For example, in "err.h" are the lines:
+```
+#ifdef ERR_C  /* If "err.c" is being compiled. */
+#  define ERR_CODE(err__code) ERR_API char *err__code = #err__code  /* Define them. */
+#else
+#  define ERR_CODE(err__code) ERR_API extern char *err__code  /* Declare them. */
+#endif
+
+ERR_CODE(ERR_ERR_PARAM);
+ERR_CODE(ERR_ERR_NOMEM);
+ERR_CODE(ERR_ERR_INTERNAL);
+#undef ERR_CODE
+```
+
+Most users of the "err" project just include the "err.h" header file,
+which declares the character pointers external.
+But the "err.c" file defines "ERR_C", which defines the pointers and
+their content.
+
+So, what does this extra complexity buy you?
+
+If the "cfg" system has its own set of error codes,
+and the "hmap" system has its own set of error codes,
+they will not alias. In other words, if you get an error code,
+it is guaranteed unique since the value is a pointer to a unique string.
+You can compare it to expected codes, and if it doesn't match one of
+your expected errors, you can at least print it.
+
+Any downsides?
+
+I could only think of two, and they aren't compelling in my experience:
+* Different underlying values. If I link the ERR system in programs A and B,
+the underlying pointer values between the two will be different.
+In contrast, simple integer values will be the same.
+I don't find this significant because you don't use the underlying value
+except within the context of the program itself,
+and even then it is used for equality checks.
+* Pointers cannot be used in switch statements.
+This one did surprise me; I didn't know that raw pointers could not be used
+in switch statements.
+I'm still not too bothered because I don't think I've ever put an error code
+into a switch statement except in the case where I'm translating it into a
+string.
+With these codes, you already have the string of the identifier,
+but you might want to also include a more user-readable sentence.
+I still don't find this downside compelling since I would use a little
+database for that, keyed by the stringified error code ID.
+That approach supports internationalization.
 
 ## Preparation
 
@@ -196,7 +275,7 @@ Here's the output from running this example and inputting 3, 0, 1:
 ````
 $ ./example2
 Input (floating point number)? 3
-Reciprocol of 3.000000 is 0.333333
+Reciprocal of 3.000000 is 0.333333
 Input? 0
 division by zero not allowed. Try again.
 Input? 1
@@ -215,7 +294,7 @@ Mesg: err
 File: example2.c
 Line: 53
 Code: -1
-Mesg: try_one_reciprocol(input)
+Mesg: try_one_reciprocal(input)
 ----------------
 File: example2.c
 Line: 43

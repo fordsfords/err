@@ -4,12 +4,21 @@
     },
     "cSpell.words": [
         "ABRT",
+        "BADFILE",
+        "errno",
+        "fflush",
         "hmap",
+        "ifdef",
         "lsim",
+        "malloc",
         "mesg",
         "nand",
+        "NOMEM",
         "qled",
-        "srlatch"
+        "srlatch",
+        "strdup",
+        "Werror",
+        "Wextra"
     ],
     "vim.scrolloff": 0,
     "C_Cpp.codeAnalysis.clangTidy.checks.disabled": [

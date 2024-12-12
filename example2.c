@@ -20,7 +20,7 @@ ERR_F reciprocal(double *result_rtn, double input_value)
 }  /* reciprocal */
 
 
-ERR_F try_one_reciprocol(double input)
+ERR_F try_one_reciprocal(double input)
 {
   double *result;  /* Test dynamic memory. */
   err_t *err;
@@ -29,7 +29,7 @@ ERR_F try_one_reciprocol(double input)
 
   err = reciprocal(result, input);
   if (err == ERR_OK) {
-    printf("Reciprocol of %f is %f\n", input, *result);
+    printf("Reciprocal of %f is %f\n", input, *result);
     free(result);
     return ERR_OK;
   }
@@ -45,7 +45,7 @@ ERR_F try_one_reciprocol(double input)
 
   /* Unrecognized error. */
   ERR_RETHROW(err, err->code);
-}  /* try_one_reciprocol */
+}  /* try_one_reciprocal */
 
 
 ERR_F math_example()
@@ -54,7 +54,7 @@ ERR_F math_example()
 
   printf("Input (floating point number)? ");  fflush(stdout);
   while (scanf("%lf", &input) == 1) {
-    ERR(try_one_reciprocol(input));
+    ERR(try_one_reciprocal(input));
 
     printf("Input? ");  fflush(stdout);
   }
