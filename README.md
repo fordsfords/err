@@ -196,9 +196,9 @@ become more helpful as participation increases.
 * **Consistent Pattern**: Unified approach across all error handling
 * **Non-ephemeral**:
 If a Unix API call returns -1 (or NULL, or some other failure indicator),
-it typically (but not always) sets "errno".
+it typically (but not always) sets `errno`.
 But be careful to save a copy!
-Making any other API call will probably change the value of  "errno".
+Making any other API call will probably change the value of  `errno`.
 In contrast, "err" returns an error object
 (conceptually similar to a Java exception object)
 which saves the original error information until it is explicitly deleted.
@@ -228,8 +228,6 @@ but you might want to also include a more user-readable sentence.
 I still don't find this downside compelling since I would use a little
 database for that, keyed by the stringified error code ID.
 That approach supports internationalization.
-* Disruptive to add it to an existing API.
-You have to change the calling signatures; all APIs return an error type.
 
 Note that "err" does not address the higher-level question of how an
 application should react to errors,
