@@ -86,6 +86,7 @@ See [Error Codes](#error-codes).
   ```c
   ERR_F my_function(int *output, int input) {
     ...
+    return ERR_OK;  /* Success! */
   }  /* my_function */
   ```
 
