@@ -7,8 +7,16 @@ Light-weight framework for C API error reporting.
 <!-- mdtoc-start -->
 &bull; [err](#err)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Table of contents](#table-of-contents)  
-&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Introduction](#introduction)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Quick Start](#quick-start)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Core Features](#core-features)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Key Macros and Functions](#key-macros-and-functions)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Error Handling](#error-handling)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Error Management](#error-management)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Helper Functions](#helper-functions)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Best Practices](#best-practices)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Design Rationale](#design-rationale)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Goals](#goals)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Downsides](#downsides)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Usage](#usage)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Error Codes](#error-codes)  
 &bull; [ifdef ERR_C  /* If "err.c" is being compiled. */](#ifdef-err_c---if-errc-is-being-compiled-)  
@@ -25,8 +33,128 @@ Light-weight framework for C API error reporting.
 <!-- TOC created by '../mdtoc/mdtoc.pl README.md' (see https://github.com/fordsfords/mdtoc) -->
 <!-- mdtoc-end -->
 
+## Quick Start
 
-## Introduction
+```c
+// Function that may fail
+ERR_F calculate_result(int *result, int input) {
+    ERR_ASSRT(input != 0, ERR_ERR_PARAM);  // Parameter validation
+    *result = 100 / input;
+    return ERR_OK;
+}
+
+// Function that uses error handling
+ERR_F process_data(int input) {
+    int result;
+    
+    // Call function and propagate any error
+    ERR(calculate_result(&result, input));
+    
+    printf("Result: %d\n", result);
+    return ERR_OK;
+}
+
+int main() {
+    // Abort on unhandled errors with stack trace
+    ERR_ABRT_ON_ERR(process_data(0), stderr);
+    return 0;
+}
+```
+In the above example, the `ERR_ASSRT()` in calculate_result() will test the condition and "throw" an error that
+assertion failed.
+
+The `ERR(calculate_result(&result, input));` in process_data() essentially re-throws the error.
+
+The `ERR_ABRT_ON_ERR(process_data(0), stderr);` in main() essentially catches any uncaught
+errors, prints a stack trace and aborts the program, generating a core file.
+The idea is that if errors are detected and not caught and handled, you want as much diagnostic
+data as possible for the support team.
+You can alternatively use `ERR_EXIT_ON_ERR(process_data(0), stderr);` which prints the stack
+trace and just does an `exit(1);`
+
+## Core Features
+
+- **Stack Traces**: Captures file, line number, and function names as errors propagate.
+- **Unique Error Codes**: String-based error codes prevent collisions between modules.
+- **Memory Safe**: Error information persists until explicitly freed.
+- **Thread Safe**: Uses no globals.
+- **Compiler Enforced**: Warning if error return values are ignored.
+
+## Key Macros and Functions
+
+### Error Handling
+
+- `ERR_F`: Use in your function declarations. Defines return type and attribute for error-returning functions.
+  ```c
+  ERR_F my_function(int *output, int input) {
+    ...
+  }  /* my_function */
+  ```
+
+- `ERR_THROW(error_code, message)`: Create and return new error. Note that printf-style error messages can be provided.
+  ```c
+  if (in_state > MAX_STATE) {
+    ERR_THROW(ERR_ERR_INTERNAL, "Invalid state: %d", in_state);  /* This returns an err_t. */
+  }
+  ```
+
+- `ERR_ASSRT(condition, error_code)`: Assert. If the condition is true, continue; else return ("throw") the error.
+This leverages `ERR_THROW()` passing the stringified condition in the message.
+This is typically used for sanity checks that "should" never fail (the messages are cryptic to end users).
+  ```c
+  ERR_ASSRT(ptr != NULL, ERR_ERR_PARAM);  /* This returns an err_t on assert failure. */
+  ```
+
+- `ERR(function_call)`: Call a function declared with `ERR_F` and check for error. If so, return ("rethrow") the error.
+This is the case where you don't expect errors and wouldn't know how to handle them if they happened.
+  ```c
+  ERR(some_function(args));  /* This returns an err_t on error. */
+  ```
+
+- `ERR_RETHROW(err, "message")`: Used when checking a returned error and deciding that you can't handle the error.
+  ```c
+  err_t *err;
+  ...
+  err = some_function(args);  /* Not using ERR(). */
+  if (err) {
+    if (err->code == MY_ERR_RETRY) {
+      retry_request = 1;
+      err_dispose(err);  /* Necessary since handling it. */
+    }
+    else {
+      ERR_RETHROW(err, "more contextual information");  /* This returns an err_t. */
+    }
+  }
+  ```
+
+### Error Management
+- `ERR_ABRT_ON_ERR(function_call, stream)`: Print stack trace and abort (generate core) on error.
+- `ERR_EXIT_ON_ERR(function_call, stream)`: Print stack trace and exit(1) on error.
+- `ERR_WARN_ON_ERR(function_call, stream)`: Print stack trace and continue.
+- `err_dispose(err)`: Free error object when handling error.
+
+### Helper Functions
+These wrap common calls with err handling.
+I don't want to go overboard, trying to wrap all standard functions;
+only a few, especially where I can value besides error handling.
+- `err_strdup(char **dst, const char *src)`: Safe string duplication.
+- `err_calloc(void **ptr, size_t count, size_t size)`: Safe memory allocation.
+- `err_asprintf(char **rtn_str, const char *fmt, ...)`: Safe printf to allocated string.
+Caller is responsible for freeing the returned string.
+- `err_atol(const char *str, long *value)`: Safe string to long conversion. Leverages `strtol()`.
+
+
+## Best Practices
+
+* Always use `ERR_F` for functions that can fail. The actual return type is `err_t *`.
+* Functions return `ERR_OK` for success (ERR_OK is NULL).
+* Return application values through parameters, reserve return value for errors.
+* Use `ERR_ASSRT` for parameter validation and other sanity checking.
+* Handle or propagate all errors - never ignore them.
+* Free error objects with `err_dispose` when handling them.
+* Use `ERR_ABRT_ON_ERR` in main() for unhandled errors.
+
+## Design Rationale
 
 The C language does not have a well-established methodology for
 APIs to report errors.
@@ -42,26 +170,30 @@ In my experience, that kind of error reporting methodology is a recipe
 for unreliable programs that are hard to debug and fix.
 Thousands of lines of code written that call APIs without checking the
 return status,
-or does check but only prints something unintelligible even to the
+or does check but only prints something unhelpful even to the
 code maintainers.
+This leads to:
+- Easy-to-ignore errors.
+- Lost error context.
+- Difficult debugging.
+- Error code conflicts between modules.
 
 
 ### Goals
 
 The goals of "err" are to be:
-* Lightweight.
-Low complexity, small size, few (if any) dependencies.
-* Low barrier to use.
-Implies easy to use.
-In particular, make easy to add sanity checks to your code with minimal
+* **Stack Traces**: captures the call stack when errors are detected.
+* **Lightweight**: no execution/memory expense during normal (non-error) processing.
+* **Low complexity**: small size, no dependencies, low barrier to use.
+In particular, make it easy to add sanity checks to your code with minimal
 effort or disruption.
-* Not a Borg.
+* **Not a Borg**:
 "Err" co-exists with other error handling methodologies in the same codebase.
+You don't have to get married to err.
 Naturally, "err"'s benefits, like stack traces,
 become more helpful as participation increases.
-* Consistency.
-Different APIs can use a consistent coding method.
-* Non-ephemeral.
+* **Consistent Pattern**: Unified approach across all error handling
+* **Non-ephemeral**:
 If a Unix API call returns -1 (or NULL, or some other failure indicator),
 it typically (but not always) sets "errno".
 But be careful to save a copy!
@@ -70,19 +202,30 @@ In contrast, "err" returns an error object
 (conceptually similar to a Java exception object)
 which saves the original error information until it is explicitly deleted.
 No chance of accidentally overwriting the error code.
-* Stack trace.
-"Err" has a primitive stack tracing capability, that can even transition thread
-boundaries.
-I.e. thread A sends a request to thread B, which detects an error,
-the error object (with stack trace) can be transferred back to thread A,
-and stack tracing can be resumed.
 
-I wish I could say that "err" is perfect.
-One negative to it is that it is disruptive to add it to an existing
-API.
+### Downsides
+
+* Err monopolizes function return values, forcing you to return values via
+input parameters.
+* Different underlying values. If I link the ERR system in programs A and B,
+the underlying pointer values between the two will be different.
+In contrast, simple integer values will be the same.
+I don't find this significant because you don't use the underlying value
+except within the context of the program itself,
+and even then it is used for equality checks.
+* Pointers cannot be used in switch statements.
+This one did surprise me; I didn't know that raw pointers could not be used
+in switch statements.
+I'm still not too bothered because I don't think I've ever put an error code
+into a switch statement except in the case where I'm translating it into a
+string.
+With these codes, you already have the string of the identifier,
+but you might want to also include a more user-readable sentence.
+I still don't find this downside compelling since I would use a little
+database for that, keyed by the stringified error code ID.
+That approach supports internationalization.
+* Disruptive to add it to an existing API.
 You have to change the calling signatures; all APIs return an error type.
-This is pretty much off the table for established APIs.
-But I think that all my new APIs will use it, at least for my own projects.
 
 Note that "err" does not address the higher-level question of how an
 application should react to errors,
@@ -91,12 +234,10 @@ Its output is not end-user friendly (only a developer could love it),
 and should probably be limited to a log file that the maintainers look
 at more than end users.
 
-But I believe that "err" has already improved my own code reliability.
-
 See http://blog.geeky-boy.com/2014/06/error-handling-enemy-of-readability.html
 for some long-winded thoughts on error handling and code readability.
 My implementation has evolved since then, but is still based on the same
-principles.
+motivations.
 
 
 ## Usage
@@ -113,7 +254,8 @@ which create an "err" object and returns it.
 you can compare the return value against "ERR_OK" to test for success.
 If it's not ok, then you can either handle the error, or you can
 ERR_RETHROW() the same error.
-There's a shortcut, ERR(), that checks for error and rethrows it in one step.
+1. There's a shortcut, ERR(), that checks for error and rethrows it in one step.
+It is very common to call a function using ERR().
 1. If an "err" object is returned all the way to the outer-most
 level of a program (i.e. an unhandled "err"), the program can use
 ERR_ABRT_ON_ERR() to detect the unhandled error, print a stack dump,
@@ -179,27 +321,6 @@ they will not alias. In other words, if you get an error code,
 it is guaranteed unique since the value is a pointer to a unique string.
 You can compare it to expected codes, and if it doesn't match one of
 your expected errors, you can at least print it.
-
-Any downsides?
-
-I could only think of two, and they aren't compelling in my experience:
-* Different underlying values. If I link the ERR system in programs A and B,
-the underlying pointer values between the two will be different.
-In contrast, simple integer values will be the same.
-I don't find this significant because you don't use the underlying value
-except within the context of the program itself,
-and even then it is used for equality checks.
-* Pointers cannot be used in switch statements.
-This one did surprise me; I didn't know that raw pointers could not be used
-in switch statements.
-I'm still not too bothered because I don't think I've ever put an error code
-into a switch statement except in the case where I'm translating it into a
-string.
-With these codes, you already have the string of the identifier,
-but you might want to also include a more user-readable sentence.
-I still don't find this downside compelling since I would use a little
-database for that, keyed by the stringified error code ID.
-That approach supports internationalization.
 
 ## Integration
 

@@ -4,7 +4,10 @@
     },
     "cSpell.words": [
         "ABRT",
+        "asprintf",
+        "atol",
         "BADFILE",
+        "calloc",
         "errno",
         "fflush",
         "hmap",
@@ -17,6 +20,7 @@
         "qled",
         "srlatch",
         "strdup",
+        "strtol",
         "Werror",
         "Wextra"
     ],
