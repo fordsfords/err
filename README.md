@@ -29,19 +29,22 @@ Light-weight framework for C API error reporting.
 
 ## Quick Start
 
+If you want to know what the point of all this is,
+jump to [Design Rationale](#design-rationale).
+
 ```c
-// Function that may fail
+/* Function that may fail. */
 ERR_F calculate_result(int *result, int input) {
-    ERR_ASSRT(input != 0, ERR_ERR_PARAM);  // Parameter validation
+    ERR_ASSRT(input != 0, ERR_ERR_PARAM);  /* Parameter validation. */
     *result = 100 / input;
     return ERR_OK;
 }
 
-// Function that uses error handling
+/* Function that uses error handling. */
 ERR_F process_data(int input) {
     int result;
     
-    // Call function and propagate any error
+    /* Call function and propagate any error. */
     ERR(calculate_result(&result, input));
     
     printf("Result: %d\n", result);
@@ -49,7 +52,7 @@ ERR_F process_data(int input) {
 }
 
 int main() {
-    // Abort on unhandled errors with stack trace
+    /* Abort on unhandled errors with stack trace. */
     ERR_ABRT_ON_ERR(process_data(0), stderr);
     return 0;
 }
@@ -70,6 +73,7 @@ trace and just does an `exit(1);`
 
 - **Stack Traces**: Captures file, line number, and function names as errors propagate.
 - **Unique Error Codes**: String-based error codes prevent collisions between modules.
+See [Error Codes](#error-codes).
 - **Memory Safe**: Error information persists until explicitly freed.
 - **Thread Safe**: Uses no globals.
 - **Compiler Enforced**: Warning if error return values are ignored.
@@ -78,7 +82,7 @@ trace and just does an `exit(1);`
 
 ### Error Handling
 
-- `ERR_F`: Use in your function declarations. Defines return type and attribute for error-returning functions.
+- `ERR_F`: Use in your function declarations. Defines return type (`err_t *`) and attribute for error-returning functions.
   ```c
   ERR_F my_function(int *output, int input) {
     ...
@@ -106,6 +110,7 @@ This is the case where you don't expect errors and wouldn't know how to handle t
   ```
 
 - `ERR_RETHROW(err, "message")`: Used when checking a returned error and deciding that you can't handle the error.
+Note that printf-style error messages can be provided.
   ```c
   err_t *err;
   ...
@@ -116,7 +121,7 @@ This is the case where you don't expect errors and wouldn't know how to handle t
       err_dispose(err);  /* Necessary since handling it. */
     }
     else {
-      ERR_RETHROW(err, "more contextual information");  /* This returns an err_t. */
+      ERR_RETHROW(err, "more information, printf-style");  /* This returns an err_t. */
     }
   }
   ```
@@ -146,7 +151,8 @@ Caller is responsible for freeing the returned string.
 * Use `ERR_ASSRT` for parameter validation and other sanity checking.
 * Handle or propagate all errors - never ignore them.
 * Free error objects with `err_dispose` when handling them.
-* Use `ERR_ABRT_ON_ERR` in main() for unhandled errors.
+* Use `ERR_ABRT_ON_ERR()` or `ERR_EXIT_ON_ERR()`in main() for unhandled errors
+to get stack trace.
 
 ## Design Rationale
 
@@ -184,7 +190,7 @@ effort or disruption.
 * **Not a Borg**:
 "Err" co-exists with other error handling methodologies in the same codebase.
 You don't have to get married to err.
-Naturally, "err"'s benefits, like stack traces,
+Naturally, err's benefits, like stack traces,
 become more helpful as participation increases.
 * **Consistent Pattern**: Unified approach across all error handling
 * **Non-ephemeral**:
@@ -201,13 +207,16 @@ No chance of accidentally overwriting the error code.
 
 * Err monopolizes function return values, forcing you to return values via
 input parameters.
-* Different underlying values. If I link the ERR system in programs A and B,
+* Disruptive to add it to an existing API.
+You have to change the calling signatures; all APIs return an error type.
+* The error codes have varying underlying values.
+If I link the ERR system in programs A and B,
 the underlying pointer values between the two will be different.
 In contrast, simple integer values will be the same.
 I don't find this significant because you don't use the underlying value
 except within the context of the program itself,
 and even then it is used for equality checks.
-* Pointers cannot be used in switch statements.
+* The error code pointers cannot be used in switch statements.
 This one did surprise me; I didn't know that raw pointers could not be used
 in switch statements.
 I'm still not too bothered because I don't think I've ever put an error code
@@ -267,7 +276,7 @@ often represented symbolically with a "#define".
 This follows the model of Unix where a function might return an
 error indicator and set "errno" to a numeric value describing the
 error. Those numeric values are assigned symbols in "errno.h".
-So the symbol "NOMEM" has the value 12.
+So the symbol `NOMEM` has the value 12.
 
 One big problem with this approach is that there's no good way to manage those
 values across projects.
@@ -284,12 +293,12 @@ Instead of an integer, it is a character pointer.
 And what does it point at?
 A string buffer containing the text of the symbolic name.
 So, for example, if a function calls a function from the
-"err" project and it returns an error, the error code might be ERR_ERR_NOMEM,
-but instead of being an integer, it's a pointer to the string "ERR_ERR_NOMEM".
+"err" project and it returns an error, the error code might be `ERR_ERR_NOMEM`,
+but instead of being an integer, it's a pointer to the string `"ERR_ERR_NOMEM"`.
 
 This is implemented with a big of macro magic.
 For example, in "err.h" are the lines:
-```
+```c
 #ifdef ERR_C  /* If "err.c" is being compiled. */
 #  define ERR_CODE(err__code) ERR_API char *err__code = #err__code  /* Define them. */
 #else
