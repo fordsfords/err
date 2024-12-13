@@ -17,7 +17,7 @@ Light-weight framework for C API error reporting.
 &bull; [define ERR_CODE(err__code) ERR_API extern char *err__code  /* Declare them. */](#define-err_codeerr__code-err_api-extern-char-err__code---declare-them-)  
 &bull; [endif](#endif)  
 &bull; [undef ERR_CODE](#undef-err_code)  
-&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Preparation](#preparation)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Integration](#integration)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Example 1](#example-1)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Example 2](#example-2)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Random Details](#random-details)  
@@ -78,7 +78,7 @@ the error object (with stack trace) can be transferred back to thread A,
 and stack tracing can be resumed.
 
 I wish I could say that "err" is perfect.
-One negative to it is that it is VERY disruptive to add it to an existing
+One negative to it is that it is disruptive to add it to an existing
 API.
 You have to change the calling signatures; all APIs return an error type.
 This is pretty much off the table for established APIs.
@@ -126,8 +126,8 @@ See [Error Codes](#error-codes) for details.
 
 ### Error Codes
 
-In most programs, an error coe is an integer, often represented
-symbolically with a "#define".
+In most error handling approaches, an error code is an integer,
+often represented symbolically with a "#define".
 This follows the model of Unix where a function might return an
 error indicator and set "errno" to a numeric value describing the
 error. Those numeric values are assigned symbols in "errno.h".
@@ -201,7 +201,7 @@ I still don't find this downside compelling since I would use a little
 database for that, keyed by the stringified error code ID.
 That approach supports internationalization.
 
-## Preparation
+## Integration
 
 Download the "err" repository from https://github.com/fordsfords/err
 

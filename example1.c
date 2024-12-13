@@ -33,7 +33,7 @@ int main(int argc, char **argv)
   if (argc > 1) { fprintf(stderr, "Warning, parameter '%s' not expected.\n", argv[1]); }
 
   /* If error returns to outer-most main, abort. */
-  ERR_ABRT_ON_ERR(math_example(argc, argv), stderr);
+  ERR_ABRT_ON_ERR(math_example(), stderr);
 
   printf("Exiting\n");  fflush(stdout);
 
