@@ -7,8 +7,8 @@ Light-weight module for C API error reporting.
 <!-- mdtoc-start -->
 &bull; [err](#err)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Table of contents](#table-of-contents)  
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Introduction](#introduction)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Quick Start](#quick-start)  
-&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Core Features](#core-features)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Key Macros and Functions](#key-macros-and-functions)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Error Handling](#error-handling)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Error Management](#error-management)  
