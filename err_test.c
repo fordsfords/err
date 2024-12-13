@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "err.h"
 
 #define E(e__test) do { \
@@ -32,7 +33,7 @@
 } while (0)
 
 
-/* Options */
+/* Command-line options */
 int o_testnum;
 
 
@@ -124,6 +125,46 @@ void test1() {
   E(err_asprintf(&start_msg, "%s: %s\n", "err_test", "starting"));
   ASSRT(strcmp(start_msg, "err_test: starting\n") == 0);
   free(start_msg);
+
+  long rtn_val;
+  E(err_atol("123", &rtn_val));
+  ASSRT(rtn_val == 123);
+  E(err_atol("0x123", &rtn_val));
+  ASSRT(rtn_val == 0x123);
+
+  /* Test err_atol(). */
+  char *test_str;
+
+  E(err_asprintf(&test_str, "%ld", LONG_MAX));
+  E(err_atol(test_str, &rtn_val));
+  ASSRT(rtn_val == LONG_MAX);
+  free(test_str);
+  E(err_asprintf(&test_str, "%ld", LONG_MIN));
+  E(err_atol(test_str, &rtn_val));
+  ASSRT(rtn_val == LONG_MIN);
+  free(test_str);
+
+  /* Overflow test (append a "1" to LONG_MAX). */
+  E(err_asprintf(&test_str, "%ld1", LONG_MAX));
+  err = err_atol(test_str, &rtn_val);
+  ASSRT(err);
+  ASSRT(err->code == ERR_ERR_BAD_NUMBER);
+  free(test_str);
+  E(err_asprintf(&test_str, "%ld1", LONG_MIN));
+  err = err_atol(test_str, &rtn_val);
+  ASSRT(err);
+  ASSRT(err->code == ERR_ERR_BAD_NUMBER);
+  free(test_str);
+
+  err = err_atol(".7", &rtn_val);
+  ASSRT(err);
+  ASSRT(err->code == ERR_ERR_BAD_NUMBER);
+  err = err_atol("7 ", &rtn_val);
+  ASSRT(err);
+  ASSRT(err->code == ERR_ERR_BAD_NUMBER);
+  err = err_atol(" ", &rtn_val);
+  ASSRT(err);
+  ASSRT(err->code == ERR_ERR_BAD_NUMBER);
 
   /* success */
   E(funct_b(0));
