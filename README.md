@@ -1,5 +1,5 @@
 # err
-Light-weight framework for C API error reporting.
+Light-weight module for C API error reporting.
 
 
 ## Table of contents
@@ -26,6 +26,22 @@ Light-weight framework for C API error reporting.
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [License](#license)  
 <!-- TOC created by '../mdtoc/mdtoc.pl README.md' (see https://github.com/fordsfords/mdtoc) -->
 <!-- mdtoc-end -->
+
+
+## Introduction
+
+The C language does not have a well-established methodology for
+APIs to report errors.
+The `err` module supports a simple, consistent approach to error handling
+with some powerful diagnostic support built-in.
+
+- **Stack Traces**: Captures file, line number, and function names as errors propagate.
+- **Unique Error Codes**: String-based error codes prevent collisions between modules
+(see [Error Codes](#error-codes)).
+- **Normally Zero Overhead**: No additional memory or CPU load for non-error execution.
+- **Memory Safe**: Error information persists until explicitly freed.
+- **Thread Safe**: Uses no globals.
+- **Compiler Enforced**: Warning if error return values are ignored.
 
 ## Quick Start
 
@@ -68,15 +84,6 @@ The idea is that if errors are detected and not caught and handled, you want as 
 data as possible for the support team.
 You can alternatively use `ERR_EXIT_ON_ERR(process_data(0), stderr);` which prints the stack
 trace and just does an `exit(1);`
-
-## Core Features
-
-- **Stack Traces**: Captures file, line number, and function names as errors propagate.
-- **Unique Error Codes**: String-based error codes prevent collisions between modules.
-See [Error Codes](#error-codes).
-- **Memory Safe**: Error information persists until explicitly freed.
-- **Thread Safe**: Uses no globals.
-- **Compiler Enforced**: Warning if error return values are ignored.
 
 ## Key Macros and Functions
 
