@@ -19,6 +19,12 @@ Light-weight module for C API error reporting.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Downsides](#downsides)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Usage](#usage)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&bull; [Error Codes](#error-codes)  
+&bull; [ifdef ERR_C  /* If "err.c" is being compiled. */](#ifdef-err_c---if-errc-is-being-compiled-)  
+&bull; [define ERR_CODE(err__code) ERR_API char *err__code = #err__code  /* Define them. */](#define-err_codeerr__code-err_api-char-err__code--err__code---define-them-)  
+&bull; [else](#else)  
+&bull; [define ERR_CODE(err__code) ERR_API extern char *err__code  /* Declare them. */](#define-err_codeerr__code-err_api-extern-char-err__code---declare-them-)  
+&bull; [endif](#endif)  
+&bull; [undef ERR_CODE](#undef-err_code)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Integration](#integration)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Example 1](#example-1)  
 &nbsp;&nbsp;&nbsp;&nbsp;&bull; [Example 2](#example-2)  
@@ -42,6 +48,9 @@ with some powerful diagnostic support built-in.
 - **Memory Safe**: Error information persists until explicitly freed.
 - **Thread Safe**: Uses no globals.
 - **Compiler Enforced**: Warning if error return values are ignored.
+
+Thanks to Claude.ai for some help with the code and much help with the doc.
+See https://blog.geeky-boy.com/2024/12/claude-as-coders-assistant.html for details.
 
 ## Quick Start
 
